@@ -1,0 +1,14 @@
+{
+  "id": "level1-mission1",
+  "title": "The Missing Citizens",
+  "level": 1,
+  "description": "Find all citizens who live in the 'Downtown' district.",
+  "story": "Welcome, Data Detective! Reports have come in that citizens in Downtown are missing from official records. Your job is to query the citizens table and find everyone who lives in Downtown.",
+  "hint": "Use SELECT with a WHERE clause to filter by district.",
+  "xpReward": 100,
+  "tableSetup": "CREATE TABLE IF NOT EXISTS citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), district VARCHAR(50), age INTEGER); INSERT INTO citizens (name, district, age) VALUES ('Alice', 'Downtown', 28), ('Bob', 'Uptown', 34), ('Carol', 'Downtown', 22), ('David', 'Midtown', 45), ('Eve', 'Downtown', 19) ON CONFLICT DO NOTHING;",
+  "validationRules": {
+    "requiredKeywords": ["SELECT", "FROM", "WHERE"],
+    "forbiddenKeywords": []
+  }
+}
