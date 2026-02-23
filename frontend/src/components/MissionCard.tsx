@@ -9,6 +9,7 @@ export default function MissionCard({ mission }: MissionCardProps) {
   const navigate = useNavigate();
   return (
     <div className="mission-card">
+      <div className="mission-card-art" aria-hidden="true" />
       <div className="mission-card-header">
         <span className="level-badge">Level {mission.level}</span>
         <span className="xp-badge">⚡ {mission.xpReward} XP</span>

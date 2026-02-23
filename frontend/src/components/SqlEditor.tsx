@@ -12,10 +12,10 @@ export default function SqlEditor({ value, onChange }: SqlEditorProps) {
         <span className="editor-dot editor-dot-red" />
         <span className="editor-dot editor-dot-yellow" />
         <span className="editor-dot editor-dot-green" />
-        <span className="editor-label">query.sql</span>
+        <span className="editor-label">mission.console</span>
       </div>
       <Editor
-        height="200px"
+        height="220px"
         language="sql"
         value={value}
         onChange={(v) => onChange(v ?? '')}
