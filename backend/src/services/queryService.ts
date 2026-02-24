@@ -11,3 +11,16 @@ export async function executeQuery(sql: string): Promise<{
   const rowCount = result.rowCount ?? rows.length;
   return { columns, rows, rowCount };
 }
+
+export async function getQueryPerformance(sql: string): Promise<{
+  plan: string[];
+  executionTime: number;
+}> {
+  const startTime = Date.now();
+  const result = await pool.query(`EXPLAIN ANALYZE ${sql}`);
+  const executionTime = Date.now() - startTime;
+  
+  const plan = (result.rows as Array<{ 'QUERY PLAN': string }>).map(row => row['QUERY PLAN']);
+  
+  return { plan, executionTime };
+}

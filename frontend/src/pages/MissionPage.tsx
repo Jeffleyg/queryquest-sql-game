@@ -7,7 +7,7 @@ import SqlEditor from '../components/SqlEditor';
 import ResultsPanel from '../components/ResultsPanel';
 import { HelpModal } from '../components/HelpModal';
 import { useSettings } from '../hooks/useSettings';
-import type { Mission, QueryResult, PlayerProgress } from '../types';
+import type { Mission, QueryResult } from '../types';
 
 export default function MissionPage() {
   const { id } = useParams<{ id: string }>();
@@ -262,7 +262,7 @@ export default function MissionPage() {
             <button className="btn-secondary" onClick={() => setSql('')}>Clear</button>
             <button className="btn-secondary" onClick={() => setHelpOpen(true)}>📚 Help</button>
           </div>
-          <ResultsPanel result={result} isLoading={running} showCelebration={settings.showCelebration} />
+          <ResultsPanel result={result} isLoading={running} showCelebration={settings.showCelebration} query={sql} missionId={id} />
         </section>
       </div>
       

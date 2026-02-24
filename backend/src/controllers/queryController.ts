@@ -178,3 +178,59 @@ async function checkLevelUp(userId: string): Promise<string> {
   
   return '';
 }
+
+export async function getQueryAnalysis(req: AuthRequest, res: Response): Promise<void> {
+  const { sql, missionId } = req.body as { sql: string; missionId?: string };
+
+  if (!sql || typeof sql !== 'string') {
+    res.status(400).json({ success: false, error: 'No SQL query provided.' });
+    return;
+  }
+
+  const safetyCheck = isSafeQuery(sql, missionId);
+  if (!safetyCheck.safe) {
+    res.status(400).json({ success: false, error: safetyCheck.reason ?? 'Unsafe query.' });
+    return;
+  }
+
+  let mission = missionId ? getMissionById(missionId) : null;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    if (mission?.tableSetup) {
+      const setupQueries = Array.isArray(mission.tableSetup) 
+        ? mission.tableSetup 
+        : [mission.tableSetup];
+      
+      for (const query of setupQueries) {
+        await client.query(query);
+      }
+    }
+
+    const startTime = Date.now();
+    const result = await client.query(`EXPLAIN (ANALYZE, BUFFERS, VERBOSE) ${sql}`);
+    const executionTime = Date.now() - startTime;
+
+    await client.query('ROLLBACK');
+
+    const plan = (result.rows as Array<{ 'QUERY PLAN': string }>).map(row => row['QUERY PLAN']);
+
+    res.json({ 
+      success: true, 
+      plan,
+      executionTime,
+      feedback: '📊 Query execution plan generated successfully!'
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    const message = (error as Error).message || 'Unknown error';
+    res.status(500).json({ 
+      success: false, 
+      error: '❌ ' + message 
+    });
+  } finally {
+    client.release();
+  }
+}

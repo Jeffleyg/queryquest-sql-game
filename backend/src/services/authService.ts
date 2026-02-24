@@ -419,6 +419,50 @@ export async function getUnlockedMissions(userId: string): Promise<string[]> {
   }
 }
 
+export interface Ranking {
+  rank: number;
+  userId: string;
+  username: string;
+  currentLevel: number;
+  currentXP: number;
+  missionsCompleted: number;
+}
+
+export async function getRankings(limit: number = 100): Promise<Ranking[]> {
+  const client = await pool.connect();
+  
+  try {
+    const result = await client.query(
+      `SELECT 
+        ROW_NUMBER() OVER (ORDER BY pp.current_level DESC, pp.current_xp DESC) as rank,
+        u.id as user_id,
+        u.username,
+        pp.current_level,
+        pp.current_xp,
+        COUNT(DISTINCT cm.mission_id) as missions_completed
+       FROM users u
+       JOIN player_progress pp ON u.id = pp.user_id
+       LEFT JOIN completed_missions cm ON u.id = cm.user_id
+       WHERE u.is_verified = true
+       GROUP BY u.id, u.username, pp.current_level, pp.current_xp
+       ORDER BY pp.current_level DESC, pp.current_xp DESC
+       LIMIT $1`,
+      [limit]
+    );
+
+    return result.rows.map(row => ({
+      rank: row.rank,
+      userId: row.user_id,
+      username: row.username,
+      currentLevel: row.current_level,
+      currentXP: row.current_xp,
+      missionsCompleted: parseInt(row.missions_completed, 10) || 0,
+    }));
+  } finally {
+    client.release();
+  }
+}
+
 export async function saveQueryHistory(userId: string, missionId: string | null, query: string, success: boolean): Promise<void> {
   const client = await pool.connect();
   

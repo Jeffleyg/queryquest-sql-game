@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { executeUserQuery } from '../controllers/queryController';
+import { executeUserQuery, getQueryAnalysis } from '../controllers/queryController';
 import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
@@ -14,5 +14,6 @@ const queryLimiter = rateLimit({
 });
 
 router.post('/', authenticateToken, queryLimiter, executeUserQuery);
+router.post('/analyze', authenticateToken, queryLimiter, getQueryAnalysis);
 
 export default router;

@@ -100,6 +100,63 @@ QueryQuest transforms SQL learning into an engaging adventure where students com
    ALTER TABLE users ADD COLUMN IF NOT EXISTS firebase_uid VARCHAR(255) UNIQUE;
    ```
 
+## 🧪 Testing
+
+### Backend Tests
+
+Run unit and integration tests:
+
+```bash
+cd backend
+npm install  # Install Jest and testing dependencies
+npm test
+```
+
+Run tests in watch mode (for development):
+```bash
+npm run test:watch
+```
+
+Generate coverage report:
+```bash
+npm run test:coverage
+```
+
+**Test Coverage:**
+- SQL Safety validation (DELETE/UPDATE without WHERE, CREATE/ALTER/DROP restrictions)
+- Authentication and token generation
+- Query execution and error handling
+
+### CI/CD Pipeline
+
+GitHub Actions is configured to:
+- Run backend tests and TypeScript type checking on every push to `main` or `develop`
+- Build the frontend and check for type errors
+- Audit dependencies for security vulnerabilities
+- Generate coverage reports
+
+Workflows are defined in `.github/workflows/`:
+- `backend.yml` - Backend tests, build, and security checks
+- `frontend.yml` - Frontend build and type checking
+
+## 📊 Query Performance Analysis
+
+The platform now includes **EXPLAIN ANALYZE** functionality to help students understand query performance:
+
+1. **Execute a query** normally in a mission
+2. **Click the "⚡ Performance" tab** in the results panel
+3. **Click "Analyze Performance"** to see the execution plan
+4. Understand:
+   - **Execution Time:** How long the query took to run
+   - **Query Plan:** PostgreSQL's plan for executing the query
+   - **Cost:** Lower is better - indicates more efficient queries
+   - **Seq Scan vs Index Scan:** Learning when to optimize with indexes
+
+This helps students learn:
+- Why some queries are faster than others
+- How indexes improve performance
+- Database optimization techniques
+
 ### Firebase Hosting (optional)
 
 If you want to deploy the frontend on Firebase Hosting:

@@ -29,6 +29,11 @@ export interface QueryResult {
   playerProgress?: PlayerProgress;
 }
 
+export interface QueryAnalysis {
+  plan: string[];
+  executionTime: number;
+}
+
 export interface PlayerState {
   level: number;
   xp: number;
@@ -42,4 +47,13 @@ export interface PlayerProgress {
   xpToNextLevel: number;
   completedMissions: string[];
   unlockedMissions: string[];
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  username: string;
+  currentLevel: number;
+  currentXP: number;
+  missionsCompleted: number;
 }

@@ -9,6 +9,7 @@ import PendingVerificationPage from './pages/PendingVerificationPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import SettingsPage from './pages/SettingsPage';
+import RankingsPage from './pages/RankingsPage';
 import { applySettings, getSettings } from './utils/settings';
 
 // Simple auth check
@@ -47,6 +48,11 @@ function App() {
       <Route path="/settings" element={
         <ProtectedRoute>
           <SettingsPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/rankings" element={
+        <ProtectedRoute>
+          <RankingsPage />
         </ProtectedRoute>
       } />
     </Routes>
