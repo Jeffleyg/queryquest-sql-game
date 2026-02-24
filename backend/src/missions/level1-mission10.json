@@ -1,0 +1,14 @@
+{
+  "id": "level1-mission10",
+  "title": "The Grand Census Report",
+  "level": 1,
+  "description": "Create a complete report: district, count of citizens, and average age, sorted by count.",
+  "story": "The mayor needs a comprehensive report! Combine everything you've learned: group by district, count citizens, calculate average age, and order by population. This is your final exam!",
+  "hint": "Use GROUP BY with multiple aggregate functions (COUNT and AVG), then ORDER BY the count.",
+  "xpReward": 600,
+  "tableSetup": "CREATE TABLE IF NOT EXISTS citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), district VARCHAR(50), age INTEGER); INSERT INTO citizens (name, district, age) VALUES ('Alice', 'Downtown', 28), ('Bob', 'Uptown', 34), ('Carol', 'Downtown', 22), ('David', 'Midtown', 45), ('Eve', 'Downtown', 19), ('Frank', 'Uptown', 18), ('Grace', 'Midtown', 29), ('Henry', 'Downtown', 31), ('Iris', 'Uptown', 26), ('Amy', 'Midtown', 24), ('Andrew', 'Downtown', 35), ('Anna', 'Uptown', 27), ('Luke', 'Downtown', 30), ('Maria', 'Downtown', 25), ('Nick', 'Uptown', 40), ('Olivia', 'Midtown', 33) ON CONFLICT DO NOTHING;",
+  "validationRules": {
+    "requiredKeywords": ["SELECT", "FROM", "GROUP BY", "COUNT", "AVG"],
+    "forbiddenKeywords": []
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "level3-mission6",
+  "level": 3,
+  "title": "Conditional Logic",
+  "description": "Use CASE statements to categorize citizens by age group dynamically within your query.",
+  "story": "Create an age distribution report! Use CASE to classify citizens as 'Young' (<30), 'Adult' (30-50), or 'Senior' (>50) without modifying the table.",
+  "hint": "CASE WHEN age < 30 THEN 'Young' WHEN age <= 50 THEN 'Adult' ELSE 'Senior' END AS age_group",
+  "xpReward": 1900,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS citizens CASCADE;",
+    "CREATE TABLE citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), age INT, district VARCHAR(50));",
+    "INSERT INTO citizens (name, age, district) VALUES ('Alice Johnson', 28, 'Downtown'), ('Bob Smith', 35, 'Uptown'), ('Charlie Brown', 52, 'Midtown'), ('Diana Prince', 30, 'Downtown'), ('Eve Anderson', 65, 'Uptown'), ('Frank Miller', 29, 'Midtown');"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["CASE", "WHEN", "THEN"],
+    "expectedColumns": ["name", "age"],
+    "minRows": 6
+  }
+}

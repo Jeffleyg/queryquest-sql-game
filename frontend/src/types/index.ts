@@ -6,11 +6,16 @@ export interface Mission {
   story: string;
   hint: string;
   xpReward: number;
-  tableSetup: string;
+  tableSetup: string | string[];
   expectedQuery?: string;
   validationRules: {
     requiredKeywords: string[];
     forbiddenKeywords?: string[];
+    expectedColumns?: string[];
+    minRows?: number;
+    expectedRowCountAfter?: number;
+    mustContainValues?: string[];
+    mustNotExist?: string[];
   };
 }
 
@@ -21,6 +26,7 @@ export interface QueryResult {
   rowCount: number;
   feedback: string;
   xpEarned?: number;
+  playerProgress?: PlayerProgress;
 }
 
 export interface PlayerState {
@@ -28,4 +34,12 @@ export interface PlayerState {
   xp: number;
   xpToNextLevel: number;
   completedMissions: string[];
+}
+
+export interface PlayerProgress {
+  currentLevel: number;
+  currentXP: number;
+  xpToNextLevel: number;
+  completedMissions: string[];
+  unlockedMissions: string[];
 }

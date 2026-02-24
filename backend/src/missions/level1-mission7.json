@@ -1,0 +1,14 @@
+{
+  "id": "level1-mission7",
+  "title": "Name Pattern Search",
+  "level": 1,
+  "description": "Find all citizens whose name starts with the letter 'A'.",
+  "story": "A mysterious message was found, mentioning someone whose name starts with 'A'. Search the citizens database to find all possible suspects. Quick thinking is essential!",
+  "hint": "Use the LIKE operator with 'A%' to match names starting with A.",
+  "xpReward": 400,
+  "tableSetup": "CREATE TABLE IF NOT EXISTS citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), district VARCHAR(50), age INTEGER); INSERT INTO citizens (name, district, age) VALUES ('Alice', 'Downtown', 28), ('Bob', 'Uptown', 34), ('Carol', 'Downtown', 22), ('David', 'Midtown', 45), ('Eve', 'Downtown', 19), ('Frank', 'Uptown', 18), ('Grace', 'Midtown', 29), ('Henry', 'Downtown', 31), ('Iris', 'Uptown', 26), ('Amy', 'Midtown', 24), ('Andrew', 'Downtown', 35), ('Anna', 'Uptown', 27) ON CONFLICT DO NOTHING;",
+  "validationRules": {
+    "requiredKeywords": ["SELECT", "FROM", "WHERE", "LIKE"],
+    "forbiddenKeywords": []
+  }
+}

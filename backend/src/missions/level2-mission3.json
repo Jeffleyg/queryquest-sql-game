@@ -1,0 +1,19 @@
+{
+  "id": "level2-mission3",
+  "level": 2,
+  "title": "New Arrival",
+  "description": "Register a new citizen in the database using INSERT INTO statement.",
+  "story": "A new resident just moved to the city! Add their information to the citizens database: Emma Wilson, age 26, living in Downtown district.",
+  "hint": "Use INSERT INTO citizens (name, age, district) VALUES (...) to add new records.",
+  "xpReward": 800,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS citizens CASCADE;",
+    "CREATE TABLE citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), age INT, district VARCHAR(50));",
+    "INSERT INTO citizens (name, age, district) VALUES ('Alice Johnson', 28, 'Downtown'), ('Bob Smith', 35, 'Uptown');"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["INSERT", "INTO", "citizens"],
+    "mustContainValues": ["Emma Wilson", "26", "Downtown"],
+    "expectedRowCountAfter": 3
+  }
+}

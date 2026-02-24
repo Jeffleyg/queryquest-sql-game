@@ -1,0 +1,14 @@
+{
+  "id": "level1-mission8",
+  "title": "Multiple District Search",
+  "level": 1,
+  "description": "Find citizens who live in Downtown OR Uptown.",
+  "story": "Two districts are merging their community programs! Find all citizens from Downtown and Uptown so we can send them invitations. Time is of the essence!",
+  "hint": "Use IN operator with a list of districts, or combine conditions with OR.",
+  "xpReward": 450,
+  "tableSetup": "CREATE TABLE IF NOT EXISTS citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), district VARCHAR(50), age INTEGER); INSERT INTO citizens (name, district, age) VALUES ('Alice', 'Downtown', 28), ('Bob', 'Uptown', 34), ('Carol', 'Downtown', 22), ('David', 'Midtown', 45), ('Eve', 'Downtown', 19), ('Frank', 'Uptown', 18), ('Grace', 'Midtown', 29), ('Henry', 'Downtown', 31), ('Iris', 'Uptown', 26), ('Amy', 'Midtown', 24), ('Andrew', 'Downtown', 35), ('Anna', 'Uptown', 27) ON CONFLICT DO NOTHING;",
+  "validationRules": {
+    "requiredKeywords": ["SELECT", "FROM", "WHERE"],
+    "forbiddenKeywords": []
+  }
+}

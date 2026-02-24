@@ -1,0 +1,14 @@
+{
+  "id": "level1-mission6",
+  "title": "Average Age Investigation",
+  "level": 1,
+  "description": "Calculate the average age of citizens in Downtown.",
+  "story": "Health officials need demographic data! Calculate the average age of Downtown residents to plan appropriate healthcare services. Precision matters here!",
+  "hint": "Use AVG() function with a WHERE clause to filter by district.",
+  "xpReward": 350,
+  "tableSetup": "CREATE TABLE IF NOT EXISTS citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), district VARCHAR(50), age INTEGER); INSERT INTO citizens (name, district, age) VALUES ('Alice', 'Downtown', 28), ('Bob', 'Uptown', 34), ('Carol', 'Downtown', 22), ('David', 'Midtown', 45), ('Eve', 'Downtown', 19), ('Frank', 'Uptown', 18), ('Grace', 'Midtown', 29), ('Henry', 'Downtown', 31), ('Iris', 'Uptown', 26), ('Jack', 'Midtown', 24), ('Kate', 'Downtown', 20) ON CONFLICT DO NOTHING;",
+  "validationRules": {
+    "requiredKeywords": ["SELECT", "FROM", "WHERE", "AVG"],
+    "forbiddenKeywords": []
+  }
+}

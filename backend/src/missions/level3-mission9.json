@@ -1,0 +1,22 @@
+{
+  "id": "level3-mission9",
+  "level": 3,
+  "title": "The Top Performers",
+  "description": "Combine JOINs, subqueries, and HAVING to find departments where average salary exceeds city average.",
+  "story": "Find elite departments! Use a subquery to calculate city-wide average salary, then JOIN tables and use HAVING to filter departments exceeding that average.",
+  "hint": "SELECT d.name, AVG(j.salary) FROM departments d JOIN jobs j ON d.id = j.department_id GROUP BY d.name HAVING AVG(j.salary) > (SELECT AVG(salary) FROM jobs);",
+  "xpReward": 2200,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS jobs CASCADE;",
+    "DROP TABLE IF EXISTS departments CASCADE;",
+    "CREATE TABLE departments (id SERIAL PRIMARY KEY, name VARCHAR(100), location VARCHAR(50));",
+    "CREATE TABLE jobs (id SERIAL PRIMARY KEY, department_id INT, position VARCHAR(100), salary INT);",
+    "INSERT INTO departments (name, location) VALUES ('Engineering', 'HQ'), ('Marketing', 'Downtown'), ('Sales', 'Uptown'), ('HR', 'HQ');",
+    "INSERT INTO jobs (department_id, position, salary) VALUES (1, 'Engineer', 95000), (1, 'Senior Engineer', 120000), (2, 'Manager', 75000), (2, 'Associate', 55000), (3, 'Sales Rep', 65000), (3, 'Director', 110000), (4, 'HR Specialist', 60000);"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["JOIN", "GROUP", "BY", "HAVING", "AVG"],
+    "expectedColumns": ["name"],
+    "minRows": 2
+  }
+}

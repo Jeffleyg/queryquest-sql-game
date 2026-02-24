@@ -5,22 +5,41 @@ import Header from '../components/Header';
 import QueryBuilder from '../components/QueryBuilder';
 import SqlEditor from '../components/SqlEditor';
 import ResultsPanel from '../components/ResultsPanel';
-import type { Mission, QueryResult, PlayerState } from '../types';
-
-const DEFAULT_PLAYER: PlayerState = { level: 1, xp: 0, xpToNextLevel: 500, completedMissions: [] };
+import { HelpModal } from '../components/HelpModal';
+import type { Mission, QueryResult, PlayerProgress } from '../types';
+import { loadPlayerProgress, savePlayerProgress, getDefaultProgress, getPlayerId } from '../utils/playerStorage';
 
 export default function MissionPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const [mission, setMission] = useState<Mission | null>(null);
+  const [allMissions, setAllMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sql, setSql] = useState('SELECT * FROM citizens WHERE district = \'Downtown\';');
+  const [sql, setSql] = useState('');
   const [sqlPreview, setSqlPreview] = useState('');
   const [result, setResult] = useState<QueryResult | null>(null);
   const [running, setRunning] = useState(false);
-  const [player, setPlayer] = useState<PlayerState>(DEFAULT_PLAYER);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [playerProgress, setPlayerProgress] = useState<PlayerProgress>(
+    loadPlayerProgress() || getDefaultProgress()
+  );
+
+  const player = {
+    level: playerProgress.currentLevel,
+    xp: playerProgress.currentXP,
+    xpToNextLevel: playerProgress.xpToNextLevel,
+    completedMissions: playerProgress.completedMissions,
+  };
+
+  // Load all missions for navigation
+  useEffect(() => {
+    axios
+      .get<Mission[]>('/api/missions')
+      .then((res) => setAllMissions(res.data))
+      .catch(() => console.error('Failed to load missions'));
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -35,18 +54,47 @@ export default function MissionPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // Navigation logic
+  const getUnlockedMissions = () => {
+    return allMissions.filter((m) => playerProgress.unlockedMissions.includes(m.id));
+  };
+
+  const getCurrentMissionIndex = () => {
+    const unlockedMissions = getUnlockedMissions();
+    return unlockedMissions.findIndex((m) => m.id === id);
+  };
+
+  const getPreviousMissionId = () => {
+    const unlockedMissions = getUnlockedMissions();
+    const currentIndex = getCurrentMissionIndex();
+    return currentIndex > 0 ? unlockedMissions[currentIndex - 1].id : null;
+  };
+
+  const getNextMissionId = () => {
+    const unlockedMissions = getUnlockedMissions();
+    const currentIndex = getCurrentMissionIndex();
+    return currentIndex >= 0 && currentIndex < unlockedMissions.length - 1
+      ? unlockedMissions[currentIndex + 1].id
+      : null;
+  };
+
   async function handleRunQuery() {
     if (!sql.trim()) return;
     setRunning(true);
     setResult(null);
     try {
+      const playerId = getPlayerId();
       const res = await axios.post<QueryResult>('/api/query', {
         sql,
         missionId: id,
+        playerId,
       });
       setResult(res.data);
-      if (res.data.xpEarned) {
-        setPlayer((prev) => ({ ...prev, xp: prev.xp + (res.data.xpEarned ?? 0) }));
+      
+      // Update player progress if returned from server
+      if (res.data.playerProgress) {
+        setPlayerProgress(res.data.playerProgress);
+        savePlayerProgress(res.data.playerProgress);
       }
     } catch (err) {
       const message =
@@ -80,6 +128,27 @@ export default function MissionPage() {
         {/* Sidebar */}
         <aside className="mission-sidebar">
           <button className="btn-secondary" onClick={() => navigate('/')}>← Back</button>
+          
+          {/* Mission Navigation */}
+          <div className="mission-nav-buttons">
+            <button 
+              className="btn-secondary" 
+              onClick={() => getPreviousMissionId() && navigate(`/mission/${getPreviousMissionId()}`)}
+              disabled={!getPreviousMissionId()}
+              title="Previous mission"
+            >
+              ← Prev
+            </button>
+            <button 
+              className="btn-secondary" 
+              onClick={() => getNextMissionId() && navigate(`/mission/${getNextMissionId()}`)}
+              disabled={!getNextMissionId()}
+              title="Next mission"
+            >
+              Next →
+            </button>
+          </div>
+
           <div className="mission-title-row">
             <span className="level-badge">Level {mission.level}</span>
             <span className="xp-badge">⚡ {mission.xpReward} XP</span>
@@ -170,10 +239,21 @@ export default function MissionPage() {
               {running ? '⏳ Running…' : '▶ Run Query'}
             </button>
             <button className="btn-secondary" onClick={() => setSql('')}>Clear</button>
+            <button className="btn-secondary" onClick={() => setHelpOpen(true)}>📚 Help</button>
           </div>
           <ResultsPanel result={result} isLoading={running} />
         </section>
       </div>
+      
+      <HelpModal 
+        isOpen={helpOpen} 
+        onClose={() => setHelpOpen(false)}
+        currentMissionId={id}
+        onUseTemplate={(query) => {
+          setSql(query);
+          setSqlPreview(query);
+        }}
+      />
     </>
   );
 }

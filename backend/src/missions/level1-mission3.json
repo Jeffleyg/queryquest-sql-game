@@ -1,0 +1,14 @@
+{
+  "id": "level1-mission3",
+  "title": "Sorting the Census",
+  "level": 1,
+  "description": "List all citizens sorted by age in descending order.",
+  "story": "The census bureau needs an age-sorted report. Your mission is to retrieve all citizens and order them from oldest to youngest. This will help identify demographic trends!",
+  "hint": "Use ORDER BY with DESC to sort in descending order.",
+  "xpReward": 200,
+  "tableSetup": "CREATE TABLE IF NOT EXISTS citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), district VARCHAR(50), age INTEGER); INSERT INTO citizens (name, district, age) VALUES ('Alice', 'Downtown', 28), ('Bob', 'Uptown', 34), ('Carol', 'Downtown', 22), ('David', 'Midtown', 45), ('Eve', 'Downtown', 19), ('Frank', 'Uptown', 18), ('Grace', 'Midtown', 29) ON CONFLICT DO NOTHING;",
+  "validationRules": {
+    "requiredKeywords": ["SELECT", "FROM", "ORDER BY"],
+    "forbiddenKeywords": []
+  }
+}

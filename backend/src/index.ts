@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import missionsRouter from './routes/missions';
 import queryRouter from './routes/query';
+import progressRouter from './routes/progress';
+import helpRouter from './routes/help';
 
 dotenv.config();
 
@@ -14,6 +16,8 @@ app.use(express.json());
 
 app.use('/api/missions', missionsRouter);
 app.use('/api/query', queryRouter);
+app.use('/api/progress', progressRouter);
+app.use('/api/help', helpRouter);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

@@ -1,0 +1,19 @@
+{
+  "id": "level2-mission5",
+  "level": 2,
+  "title": "Clean Up",
+  "description": "Remove outdated records from the database using DELETE statement with proper WHERE clause.",
+  "story": "Some test records were accidentally added to the citizens database. Delete all citizens who live in the 'TestDistrict'.",
+  "hint": "DELETE FROM citizens WHERE district = 'TestDistrict'. ALWAYS use WHERE or you'll delete everything!",
+  "xpReward": 900,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS citizens CASCADE;",
+    "CREATE TABLE citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), age INT, district VARCHAR(50));",
+    "INSERT INTO citizens (name, age, district) VALUES ('Alice Johnson', 28, 'Downtown'), ('Test User 1', 99, 'TestDistrict'), ('Bob Smith', 35, 'Uptown'), ('Test User 2', 99, 'TestDistrict'), ('Charlie Brown', 42, 'Midtown');"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["DELETE", "FROM", "WHERE", "citizens"],
+    "mustContainValues": ["TestDistrict"],
+    "expectedRowCountAfter": 3
+  }
+}

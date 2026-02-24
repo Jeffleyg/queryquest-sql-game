@@ -1,0 +1,19 @@
+{
+  "id": "level3-mission3",
+  "level": 3,
+  "title": "Mirror Match",
+  "description": "Use SELF JOIN to find pairs of citizens living in the same district.",
+  "story": "Find potential carpooling partners! Use a self-join on the citizens table to match people from the same district (excluding matching someone with themselves).",
+  "hint": "SELF JOIN: Join a table to itself using aliases. SELECT c1.name, c2.name FROM citizens c1 JOIN citizens c2 ON c1.district = c2.district WHERE c1.id < c2.id;",
+  "xpReward": 1600,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS citizens CASCADE;",
+    "CREATE TABLE citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), age INT, district VARCHAR(50));",
+    "INSERT INTO citizens (name, age, district) VALUES ('Alice Johnson', 28, 'Downtown'), ('Bob Smith', 35, 'Downtown'), ('Charlie Brown', 42, 'Uptown'), ('Diana Prince', 30, 'Downtown'), ('Eve Anderson', 33, 'Midtown');"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["JOIN", "citizens"],
+    "expectedColumns": ["name"],
+    "minRows": 3
+  }
+}

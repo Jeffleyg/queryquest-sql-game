@@ -1,0 +1,22 @@
+{
+  "id": "level3-mission8",
+  "level": 3,
+  "title": "Existence Check",
+  "description": "Use EXISTS to find citizens who have at least one job, demonstrating correlated subqueries.",
+  "story": "HR wants to identify employed citizens using EXISTS. This is more efficient than JOIN when you only care about existence, not the actual data from the related table.",
+  "hint": "SELECT name FROM citizens c WHERE EXISTS (SELECT 1 FROM jobs j WHERE j.citizen_id = c.id);",
+  "xpReward": 2100,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS jobs CASCADE;",
+    "DROP TABLE IF EXISTS citizens CASCADE;",
+    "CREATE TABLE citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), age INT, district VARCHAR(50));",
+    "CREATE TABLE jobs (id SERIAL PRIMARY KEY, citizen_id INT, position VARCHAR(100), company VARCHAR(100));",
+    "INSERT INTO citizens (name, age, district) VALUES ('Alice Johnson', 28, 'Downtown'), ('Bob Smith', 35, 'Uptown'), ('Charlie Brown', 42, 'Midtown'), ('Diana Prince', 30, 'Downtown'), ('Eve Anderson', 33, 'Uptown');",
+    "INSERT INTO jobs (citizen_id, position, company) VALUES (1, 'Engineer', 'Tech Corp'), (2, 'Analyst', 'Finance Ltd'), (4, 'Designer', 'Media Inc');"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["EXISTS", "SELECT", "WHERE"],
+    "expectedColumns": ["name"],
+    "minRows": 3
+  }
+}

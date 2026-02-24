@@ -1,0 +1,22 @@
+{
+  "id": "level2-mission2",
+  "level": 2,
+  "title": "The Missing Records",
+  "description": "Use LEFT JOIN to find citizens who might not have job records. Include all citizens even if they're unemployed.",
+  "story": "Not everyone in the city has a job registered. Use LEFT JOIN to see the complete picture, including those without employment records.",
+  "hint": "LEFT JOIN keeps all records from the left table (citizens) even if there's no match in the right table (jobs).",
+  "xpReward": 750,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS jobs CASCADE;",
+    "DROP TABLE IF EXISTS citizens CASCADE;",
+    "CREATE TABLE citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), age INT, district VARCHAR(50));",
+    "CREATE TABLE jobs (id SERIAL PRIMARY KEY, citizen_id INT, company VARCHAR(100), position VARCHAR(100));",
+    "INSERT INTO citizens (name, age, district) VALUES ('Alice Johnson', 28, 'Downtown'), ('Bob Smith', 35, 'Uptown'), ('Charlie Brown', 42, 'Midtown'), ('Diana Prince', 30, 'Downtown');",
+    "INSERT INTO jobs (citizen_id, company, position) VALUES (1, 'Tech Corp', 'Engineer'), (2, 'Finance Ltd', 'Analyst');"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["LEFT", "JOIN", "citizens"],
+    "expectedColumns": ["name", "company"],
+    "minRows": 4
+  }
+}

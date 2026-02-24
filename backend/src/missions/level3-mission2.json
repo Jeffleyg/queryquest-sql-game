@@ -1,0 +1,22 @@
+{
+  "id": "level3-mission2",
+  "level": 3,
+  "title": "Complete Picture",
+  "description": "Use FULL OUTER JOIN to see all citizens and all jobs, showing matches and mismatches from both sides.",
+  "story": "Management needs a complete audit: all citizens (employed or not) AND all jobs (filled or vacant). Use FULL OUTER JOIN to capture everything.",
+  "hint": "FULL OUTER JOIN combines LEFT and RIGHT JOIN - it keeps all records from BOTH tables, showing NULLs where there's no match.",
+  "xpReward": 1500,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS jobs CASCADE;",
+    "DROP TABLE IF EXISTS citizens CASCADE;",
+    "CREATE TABLE citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), age INT);",
+    "CREATE TABLE jobs (id SERIAL PRIMARY KEY, citizen_id INT, position VARCHAR(100), company VARCHAR(100));",
+    "INSERT INTO citizens (name, age) VALUES ('Alice Johnson', 28), ('Bob Smith', 35), ('Charlie Brown', 42);",
+    "INSERT INTO jobs (citizen_id, position, company) VALUES (1, 'Engineer', 'Tech Corp'), (NULL, 'Designer', 'Media Inc'), (NULL, 'Manager', 'Finance Ltd');"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["FULL", "OUTER", "JOIN"],
+    "expectedColumns": ["name", "position"],
+    "minRows": 5
+  }
+}

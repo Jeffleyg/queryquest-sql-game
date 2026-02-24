@@ -1,0 +1,19 @@
+{
+  "id": "level2-mission10",
+  "level": 2,
+  "title": "Demolition Day",
+  "description": "Safely remove an obsolete table from the database using DROP TABLE.",
+  "story": "The old 'temp_data' table is no longer needed and taking up space. Remove it from the database using DROP TABLE.",
+  "hint": "DROP TABLE temp_data; Use this carefully - it permanently deletes the table and all its data!",
+  "xpReward": 1300,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS temp_data CASCADE;",
+    "CREATE TABLE temp_data (id SERIAL PRIMARY KEY, test_value VARCHAR(50));",
+    "INSERT INTO temp_data (test_value) VALUES ('temporary1'), ('temporary2');"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["DROP", "TABLE", "temp_data"],
+    "mustNotExist": "temp_data",
+    "minRows": 0
+  }
+}

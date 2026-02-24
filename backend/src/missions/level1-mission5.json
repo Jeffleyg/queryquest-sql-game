@@ -1,0 +1,14 @@
+{
+  "id": "level1-mission5",
+  "title": "The Young Ones",
+  "level": 1,
+  "description": "Find citizens between 18 and 25 years old.",
+  "story": "A new youth program is launching! Find all citizens in the 18-25 age range who might be interested. This program will help young adults develop valuable skills.",
+  "hint": "Use BETWEEN operator or combine conditions with AND in your WHERE clause.",
+  "xpReward": 300,
+  "tableSetup": "CREATE TABLE IF NOT EXISTS citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), district VARCHAR(50), age INTEGER); INSERT INTO citizens (name, district, age) VALUES ('Alice', 'Downtown', 28), ('Bob', 'Uptown', 34), ('Carol', 'Downtown', 22), ('David', 'Midtown', 45), ('Eve', 'Downtown', 19), ('Frank', 'Uptown', 18), ('Grace', 'Midtown', 29), ('Henry', 'Downtown', 31), ('Iris', 'Uptown', 26), ('Jack', 'Midtown', 24), ('Kate', 'Downtown', 20) ON CONFLICT DO NOTHING;",
+  "validationRules": {
+    "requiredKeywords": ["SELECT", "FROM", "WHERE"],
+    "forbiddenKeywords": []
+  }
+}

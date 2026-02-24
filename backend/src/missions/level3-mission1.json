@@ -1,0 +1,22 @@
+{
+  "id": "level3-mission1",
+  "level": 3,
+  "title": "Right Side Investigation",
+  "description": "Use RIGHT JOIN to find all job positions, including those without assigned citizens.",
+  "story": "The HR department has job openings that might not have employees yet. Use RIGHT JOIN to see all positions from the jobs table, even if no citizen is assigned.",
+  "hint": "RIGHT JOIN keeps all records from the RIGHT table (jobs), even when there's no match in the LEFT table (citizens). It's the opposite of LEFT JOIN.",
+  "xpReward": 1400,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS jobs CASCADE;",
+    "DROP TABLE IF EXISTS citizens CASCADE;",
+    "CREATE TABLE citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), age INT, district VARCHAR(50));",
+    "CREATE TABLE jobs (id SERIAL PRIMARY KEY, citizen_id INT, position VARCHAR(100), salary INT, department VARCHAR(50));",
+    "INSERT INTO citizens (name, age, district) VALUES ('Alice Johnson', 28, 'Downtown'), ('Bob Smith', 35, 'Uptown');",
+    "INSERT INTO jobs (citizen_id, position, salary, department) VALUES (1, 'Engineer', 75000, 'Tech'), (2, 'Analyst', 65000, 'Finance'), (NULL, 'Designer', 70000, 'Media'), (NULL, 'Manager', 85000, 'Operations');"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["RIGHT", "JOIN", "jobs"],
+    "expectedColumns": ["position", "name"],
+    "minRows": 4
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "level2-mission8",
+  "level": 2,
+  "title": "Triple Connection",
+  "description": "Use multiple JOINs to connect three tables and reveal complex relationships.",
+  "story": "Connect citizens with their jobs AND their manager information. You'll need to join three tables: citizens, jobs, and managers.",
+  "hint": "Join citizens to jobs, then join jobs to managers. Use aliases like 'c', 'j', 'm' to keep it readable.",
+  "xpReward": 1100,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS managers CASCADE;",
+    "DROP TABLE IF EXISTS jobs CASCADE;",
+    "DROP TABLE IF EXISTS citizens CASCADE;",
+    "CREATE TABLE citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), age INT);",
+    "CREATE TABLE jobs (id SERIAL PRIMARY KEY, citizen_id INT, position VARCHAR(100), manager_id INT);",
+    "CREATE TABLE managers (id SERIAL PRIMARY KEY, name VARCHAR(100), department VARCHAR(100));",
+    "INSERT INTO citizens (name, age) VALUES ('Alice Johnson', 28), ('Bob Smith', 35);",
+    "INSERT INTO managers (name, department) VALUES ('Sarah Connor', 'Engineering'), ('John Wick', 'Finance');",
+    "INSERT INTO jobs (citizen_id, position, manager_id) VALUES (1, 'Engineer', 1), (2, 'Analyst', 2);"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["JOIN", "citizens", "jobs", "managers"],
+    "expectedColumns": ["name", "position", "department"],
+    "minRows": 2
+  }
+}

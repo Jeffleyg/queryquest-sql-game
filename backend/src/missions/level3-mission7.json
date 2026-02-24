@@ -1,0 +1,28 @@
+{
+  "id": "level3-mission7",
+  "level": 3,
+  "title": "Department Analytics",
+  "description": "Join four tables and use aggregations to calculate total department salaries and employee counts.",
+  "story": "Finance needs a comprehensive report: Join citizens, jobs, departments, and projects to show each department's total salary spending and employee count.",
+  "hint": "Use multiple JOINs and GROUP BY with SUM and COUNT. SELECT d.name, COUNT(DISTINCT c.id), SUM(j.salary) FROM departments d JOIN jobs j ON... GROUP BY d.name;",
+  "xpReward": 2000,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS projects CASCADE;",
+    "DROP TABLE IF EXISTS departments CASCADE;",
+    "DROP TABLE IF EXISTS jobs CASCADE;",
+    "DROP TABLE IF EXISTS citizens CASCADE;",
+    "CREATE TABLE citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), age INT);",
+    "CREATE TABLE departments (id SERIAL PRIMARY KEY, name VARCHAR(100), budget INT);",
+    "CREATE TABLE jobs (id SERIAL PRIMARY KEY, citizen_id INT, department_id INT, position VARCHAR(100), salary INT);",
+    "CREATE TABLE projects (id SERIAL PRIMARY KEY, department_id INT, name VARCHAR(100), status VARCHAR(50));",
+    "INSERT INTO citizens (name, age) VALUES ('Alice', 28), ('Bob', 35), ('Charlie', 42), ('Diana', 30);",
+    "INSERT INTO departments (name, budget) VALUES ('Engineering', 500000), ('Marketing', 300000), ('Sales', 400000);",
+    "INSERT INTO jobs (citizen_id, department_id, position, salary) VALUES (1, 1, 'Engineer', 75000), (2, 1, 'Senior Engineer', 95000), (3, 2, 'Manager', 85000), (4, 3, 'Sales Rep', 65000);",
+    "INSERT INTO projects (department_id, name, status) VALUES (1, 'Project Alpha', 'Active'), (2, 'Campaign Beta', 'Active'), (3, 'Deal Gamma', 'Completed');"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["JOIN", "GROUP", "BY", "departments"],
+    "expectedColumns": ["name"],
+    "minRows": 3
+  }
+}

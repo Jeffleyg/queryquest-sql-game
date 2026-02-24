@@ -1,0 +1,17 @@
+{
+  "id": "level2-mission6",
+  "level": 2,
+  "title": "Build Your Own",
+  "description": "Create a new table to store vehicle registration data for the city.",
+  "story": "The city needs a new system to track vehicle registrations. Create a table called 'vehicles' with columns: id (SERIAL PRIMARY KEY), plate VARCHAR(20), owner VARCHAR(100), model VARCHAR(100), year INT.",
+  "hint": "CREATE TABLE vehicles (id SERIAL PRIMARY KEY, plate VARCHAR(20), owner VARCHAR(100), model VARCHAR(100), year INT);",
+  "xpReward": 950,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS vehicles CASCADE;"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["CREATE", "TABLE", "vehicles"],
+    "expectedColumns": ["id", "plate", "owner", "model", "year"],
+    "minRows": 0
+  }
+}

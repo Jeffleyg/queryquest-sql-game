@@ -1,0 +1,22 @@
+{
+  "id": "level3-mission4",
+  "level": 3,
+  "title": "United Forces",
+  "description": "Combine data from multiple sources using UNION to create a single unified result set.",
+  "story": "The city has two separate databases: current_residents and new_applicants. Combine them into a single list using UNION.",
+  "hint": "UNION combines results from two SELECT statements, removing duplicates. Use UNION ALL to keep duplicates. Both queries must have the same number and type of columns.",
+  "xpReward": 1700,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS new_applicants CASCADE;",
+    "DROP TABLE IF EXISTS current_residents CASCADE;",
+    "CREATE TABLE current_residents (name VARCHAR(100), age INT, status VARCHAR(50));",
+    "CREATE TABLE new_applicants (name VARCHAR(100), age INT, status VARCHAR(50));",
+    "INSERT INTO current_residents (name, age, status) VALUES ('Alice Johnson', 28, 'Active'), ('Bob Smith', 35, 'Active'), ('Charlie Brown', 42, 'Active');",
+    "INSERT INTO new_applicants (name, age, status) VALUES ('Diana Prince', 30, 'Pending'), ('Eve Anderson', 33, 'Pending'), ('Frank Miller', 29, 'Pending');"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["UNION", "SELECT"],
+    "expectedColumns": ["name", "age", "status"],
+    "minRows": 6
+  }
+}

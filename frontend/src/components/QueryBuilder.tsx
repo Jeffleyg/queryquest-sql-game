@@ -33,7 +33,17 @@ const SCHEMA_BY_MISSION: Record<string, BuilderSchema> = {
   },
 };
 
-const OPERATORS = ['=', '!=', '>', '<', '>=', '<='];
+const OPERATORS = ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'IN', 'BETWEEN'];
+const ORDER_DIRECTIONS = ['ASC', 'DESC'];
+const AGGREGATE_FUNCTIONS = ['COUNT(*)', 'AVG', 'SUM', 'MIN', 'MAX'];
+
+interface WhereCondition {
+  field: string | null;
+  operator: string;
+  value: string | null;
+  value2?: string | null; // For BETWEEN operator
+  logicalOp?: 'AND' | 'OR';
+}
 
 function formatValue(value: string): string {
   if (/^-?\d+(\.\d+)?$/.test(value)) {
@@ -42,23 +52,86 @@ function formatValue(value: string): string {
   return `'${value.replace(/'/g, "''")}'`;
 }
 
-function buildSql(table: string, selectFields: string[], whereField: string | null, whereOp: string, whereValue: string | null) {
+function buildSql(
+  table: string, 
+  selectFields: string[], 
+  whereConditions: WhereCondition[],
+  groupByField: string | null,
+  orderByField: string | null,
+  orderByDirection: string
+) {
   const selectClause = selectFields.length > 0 ? selectFields.join(', ') : '*';
   let sql = `SELECT ${selectClause} FROM ${table}`;
-  if (whereField && whereValue) {
-    sql += ` WHERE ${whereField} ${whereOp} ${formatValue(whereValue)}`;
+  
+  // Build WHERE clause with multiple conditions
+  const validConditions = whereConditions.filter(c => {
+    if (c.operator === 'BETWEEN') {
+      return c.field && c.value && c.value2;
+    }
+    return c.field && c.value;
+  });
+  
+  if (validConditions.length > 0) {
+    const whereClause = validConditions.map((condition, index) => {
+      let conditionStr: string;
+      if (condition.operator === 'BETWEEN') {
+        conditionStr = `${condition.field} BETWEEN ${formatValue(condition.value!)} AND ${formatValue(condition.value2!)}`;
+      } else {
+        conditionStr = `${condition.field} ${condition.operator} ${formatValue(condition.value!)}`;
+      }
+      if (index === 0) return conditionStr;
+      return ` ${condition.logicalOp || 'AND'} ${conditionStr}`;
+    }).join('');
+    sql += ` WHERE ${whereClause}`;
   }
+  
+  if (groupByField) {
+    sql += ` GROUP BY ${groupByField}`;
+  }
+  
+  if (orderByField) {
+    sql += ` ORDER BY ${orderByField} ${orderByDirection}`;
+  }
+  
   return `${sql};`;
 }
 
-function buildSqlPreview(table: string, selectFields: string[], whereField: string | null, whereOp: string, whereValue: string | null) {
+function buildSqlPreview(
+  table: string, 
+  selectFields: string[], 
+  whereConditions: WhereCondition[],
+  groupByField: string | null,
+  orderByField: string | null,
+  orderByDirection: string
+) {
   const selectClause = selectFields.length > 0 ? selectFields.join(', ') : '*';
   let sql = `SELECT ${selectClause} FROM ${table}`;
 
-  if (whereField || whereValue) {
-    const field = whereField ?? 'field';
-    const value = whereValue ? formatValue(whereValue) : 'value';
-    sql += ` WHERE ${field} ${whereOp} ${value}`;
+  // Build WHERE clause preview
+  if (whereConditions.length > 0) {
+    const whereClause = whereConditions.map((condition, index) => {
+      const field = condition.field ?? 'field';
+      let conditionStr: string;
+      if (condition.operator === 'BETWEEN') {
+        const value1 = condition.value ? formatValue(condition.value) : 'value1';
+        const value2 = condition.value2 ? formatValue(condition.value2) : 'value2';
+        conditionStr = `${field} BETWEEN ${value1} AND ${value2}`;
+      } else {
+        const value = condition.value ? formatValue(condition.value) : 'value';
+        conditionStr = `${field} ${condition.operator} ${value}`;
+      }
+      if (index === 0) return conditionStr;
+      return ` ${condition.logicalOp || 'AND'} ${conditionStr}`;
+    }).join('');
+    sql += ` WHERE ${whereClause}`;
+  }
+  
+  if (groupByField) {
+    sql += ` GROUP BY ${groupByField}`;
+  }
+  
+  if (orderByField) {
+    sql += ` ORDER BY ${orderByField} ${orderByDirection}`;
   }
 
   return `${sql};`;
@@ -67,72 +140,76 @@ function buildSqlPreview(table: string, selectFields: string[], whereField: stri
 export default function QueryBuilder({ mission, onSqlChange, onPreviewChange, onReadyChange }: QueryBuilderProps) {
   const schema = useMemo(() => SCHEMA_BY_MISSION[mission.id] ?? DEFAULT_SCHEMA, [mission.id]);
   const [selectFields, setSelectFields] = useState<string[]>(schema.defaultSelect ?? []);
-  const [whereField, setWhereField] = useState<string | null>(null);
-  const [whereOp, setWhereOp] = useState<string>('=');
-  const [whereValue, setWhereValue] = useState<string | null>(null);
-  const previewSql = buildSqlPreview(schema.table, selectFields, whereField, whereOp, whereValue);
-  const isWhereComplete = Boolean(whereField && whereValue);
+  const [whereConditions, setWhereConditions] = useState<WhereCondition[]>([]);
+  const [groupByField, setGroupByField] = useState<string | null>(null);
+  const [orderByField, setOrderByField] = useState<string | null>(null);
+  const [orderByDirection, setOrderByDirection] = useState<string>('ASC');
+  
+  const previewSql = buildSqlPreview(
+    schema.table, 
+    selectFields, 
+    whereConditions,
+    groupByField,
+    orderByField,
+    orderByDirection
+  );
 
   useEffect(() => {
-    onSqlChange(buildSql(schema.table, selectFields, whereField, whereOp, whereValue));
-    onPreviewChange?.(buildSqlPreview(schema.table, selectFields, whereField, whereOp, whereValue));
-    onReadyChange?.(Boolean(whereField && whereValue));
-  }, [schema.table, selectFields, whereField, whereOp, whereValue, onSqlChange, onPreviewChange, onReadyChange]);
-
-  function handleDrop(event: React.DragEvent<HTMLDivElement>, target: TokenKind | 'select') {
-    event.preventDefault();
-    const payload = event.dataTransfer.getData('text/plain');
-    if (!payload) return;
-    const data = JSON.parse(payload) as { kind: TokenKind; value: string };
-
-    if (target === 'select' && data.kind === 'field') {
-      setSelectFields((prev) => (prev.includes(data.value) ? prev : [...prev, data.value]));
-      return;
-    }
-
-    if (target === 'field' && data.kind === 'field') {
-      setWhereField(data.value);
-      return;
-    }
-
-    if (target === 'operator' && data.kind === 'operator') {
-      setWhereOp(data.value);
-      return;
-    }
-
-    if (target === 'value' && data.kind === 'value') {
-      setWhereValue(data.value);
-    }
-  }
-
-  function allowDrop(event: React.DragEvent<HTMLDivElement>) {
-    event.preventDefault();
-  }
-
-  function startDrag(event: React.DragEvent<HTMLButtonElement>, kind: TokenKind, value: string) {
-    event.dataTransfer.setData('text/plain', JSON.stringify({ kind, value }));
-  }
+    onSqlChange(buildSql(
+      schema.table, 
+      selectFields, 
+      whereConditions,
+      groupByField,
+      orderByField,
+      orderByDirection
+    ));
+    onPreviewChange?.(buildSqlPreview(
+      schema.table, 
+      selectFields, 
+      whereConditions,
+      groupByField,
+      orderByField,
+      orderByDirection
+    ));
+    // Query is always ready - WHERE is optional
+    onReadyChange?.(true);
+  }, [schema.table, selectFields, whereConditions, groupByField, orderByField, orderByDirection, onSqlChange, onPreviewChange, onReadyChange]);
 
   function resetBuilder() {
     setSelectFields(schema.defaultSelect ?? []);
-    setWhereField(null);
-    setWhereOp('=');
-    setWhereValue(null);
+    setWhereConditions([]);
+    setGroupByField(null);
+    setOrderByField(null);
+    setOrderByDirection('ASC');
+  }
+
+  function addWhereCondition(logicalOp: 'AND' | 'OR' = 'AND') {
+    setWhereConditions(prev => [...prev, { field: null, operator: '=', value: null, logicalOp }]);
+  }
+
+  function removeWhereCondition(index: number) {
+    setWhereConditions(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function updateWhereCondition(index: number, updates: Partial<WhereCondition>) {
+    setWhereConditions(prev => prev.map((condition, i) => 
+      i === index ? { ...condition, ...updates } : condition
+    ));
   }
 
   return (
     <div className="builder-shell">
       <div className="builder-header">
         <div>
-          <div className="builder-title">Drag the clues to build the answer</div>
-          <div className="builder-subtitle">Kids can solve the case together, no typing needed.</div>
+          <div className="builder-title">Visual Query Builder</div>
+          <div className="builder-subtitle">Build your SQL query using dropdowns and inputs below.</div>
         </div>
         <button className="btn-secondary" onClick={resetBuilder}>Reset Builder</button>
       </div>
 
       <div className="builder-grid">
         <div className="builder-panel">
-          <div className="builder-panel-title">Clue Tokens</div>
+          <div className="builder-panel-title">Quick Tokens (Click to Use)</div>
           <div className="token-group">
             <div className="token-group-title">Fields</div>
             <div className="token-row">
@@ -140,9 +217,14 @@ export default function QueryBuilder({ mission, onSqlChange, onPreviewChange, on
                 <button
                   key={col}
                   className="token-chip"
-                  draggable
-                  onDragStart={(event) => startDrag(event, 'field', col)}
-                  onClick={() => setSelectFields((prev) => (prev.includes(col) ? prev : [...prev, col]))}
+                  onClick={() => {
+                    if (!whereConditions[0]?.field) {
+                      updateWhereCondition(0, { field: col });
+                    } else {
+                      setSelectFields((prev) => (prev.includes(col) ? prev : [...prev, col]));
+                    }
+                  }}
+                  title={`Click to ${!whereConditions[0]?.field ? 'set WHERE field' : 'add to SELECT'}`}
                 >
                   {col}
                 </button>
@@ -157,9 +239,8 @@ export default function QueryBuilder({ mission, onSqlChange, onPreviewChange, on
                 <button
                   key={op}
                   className="token-chip token-chip-accent"
-                  draggable
-                  onDragStart={(event) => startDrag(event, 'operator', op)}
-                  onClick={() => setWhereOp(op)}
+                  onClick={() => updateWhereCondition(0, { operator: op })}
+                  title="Click to set operator"
                 >
                   {op}
                 </button>
@@ -168,17 +249,35 @@ export default function QueryBuilder({ mission, onSqlChange, onPreviewChange, on
           </div>
 
           <div className="token-group">
-            <div className="token-group-title">Values</div>
+            <div className="token-group-title">Common Values</div>
             <div className="token-row">
               {schema.values.map((value) => (
                 <button
                   key={value}
                   className="token-chip token-chip-warm"
-                  draggable
-                  onDragStart={(event) => startDrag(event, 'value', value)}
-                  onClick={() => setWhereValue(value)}
+                  onClick={() => updateWhereCondition(0, { value })}
+                  title="Click to set value"
                 >
                   {value}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="token-group">
+            <div className="token-group-title">Aggregate Functions</div>
+            <div className="token-row">
+              {AGGREGATE_FUNCTIONS.map((func) => (
+                <button
+                  key={func}
+                  className="token-chip token-chip-accent"
+                  onClick={() => {
+                    const funcWithField = func === 'COUNT(*)' ? 'COUNT(*)' : `${func}(age)`;
+                    setSelectFields((prev) => (prev.includes(funcWithField) ? prev : [...prev, funcWithField]));
+                  }}
+                  title={`Add ${func} to SELECT`}
+                >
+                  {func}
                 </button>
               ))}
             </div>
@@ -186,23 +285,20 @@ export default function QueryBuilder({ mission, onSqlChange, onPreviewChange, on
         </div>
 
         <div className="builder-panel builder-panel-wide">
-          <div className="builder-panel-title">Build Zone</div>
+          <div className="builder-panel-title">Query Builder</div>
           <div className="builder-zone">
             <div className="builder-row">
               <span className="builder-label">SELECT</span>
-              <div
-                className="drop-zone"
-                onDragOver={allowDrop}
-                onDrop={(event) => handleDrop(event, 'select')}
-              >
-                {selectFields.length === 0 && <span className="drop-placeholder">Drop fields here</span>}
+              <div className="drop-zone">
+                {selectFields.length === 0 && <span className="drop-placeholder">* (all fields)</span>}
                 {selectFields.map((field) => (
                   <button
                     key={field}
                     className="token-pill"
                     onClick={() => setSelectFields((prev) => prev.filter((item) => item !== field))}
+                    title="Click to remove"
                   >
-                    {field}
+                    {field} ×
                   </button>
                 ))}
               </div>
@@ -215,51 +311,161 @@ export default function QueryBuilder({ mission, onSqlChange, onPreviewChange, on
               </div>
             </div>
 
+            {/* WHERE Section with multiple conditions */}
+            <div className="builder-section">
+              <div className="builder-section-header">
+                <span className="builder-label">WHERE (optional)</span>
+                <button 
+                  className="btn-add-condition"
+                  onClick={() => addWhereCondition('AND')}
+                  title="Add AND condition"
+                >
+                  + AND
+                </button>
+                <button 
+                  className="btn-add-condition"
+                  onClick={() => addWhereCondition('OR')}
+                  title="Add OR condition"
+                >
+                  + OR
+                </button>
+              </div>
+              
+              {whereConditions.length === 0 ? (
+                <div className="builder-row where-empty-message">
+                  No filters applied. Click + AND or + OR to add conditions.
+                </div>
+              ) : (
+                whereConditions.map((condition, index) => (
+                <div key={index} className="builder-row where-condition-row">
+                  {index > 0 && (
+                    <span className="logical-operator">{condition.logicalOp}</span>
+                  )}
+                  <div className="drop-zone where-zone">
+                    <select
+                      className="builder-select"
+                      value={condition.field ?? ''}
+                      onChange={(e) => updateWhereCondition(index, { field: e.target.value || null })}
+                      aria-label="WHERE field"
+                    >
+                      <option value="">Choose field...</option>
+                      {schema.columns.map((col) => (
+                        <option key={col} value={col}>{col}</option>
+                      ))}
+                    </select>
+                    <select
+                      className="builder-select builder-select-small"
+                      value={condition.operator}
+                      onChange={(e) => updateWhereCondition(index, { operator: e.target.value })}
+                      aria-label="WHERE operator"
+                    >
+                      {OPERATORS.map((op) => (
+                        <option key={op} value={op}>{op}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      className="builder-input"
+                      placeholder={condition.operator === 'BETWEEN' ? 'Min value...' : 'Enter value...'}
+                      value={condition.value ?? ''}
+                      onChange={(e) => updateWhereCondition(index, { value: e.target.value || null })}
+                      list={`value-suggestions-${index}`}
+                    />
+                    {condition.operator === 'BETWEEN' && (
+                      <>
+                        <span style={{ color: 'var(--accent)', fontWeight: 700, padding: '0 0.5rem' }}>AND</span>
+                        <input
+                          type="text"
+                          className="builder-input"
+                          placeholder="Max value..."
+                          value={condition.value2 ?? ''}
+                          onChange={(e) => updateWhereCondition(index, { value2: e.target.value || null })}
+                        />
+                      </>
+                    )}
+                    <datalist id={`value-suggestions-${index}`}>
+                      {schema.values.map((value) => (
+                        <option key={value} value={value} />
+                      ))}
+                    </datalist>
+                    <button 
+                      className="btn-remove-condition"
+                      onClick={() => removeWhereCondition(index)}
+                      title="Remove this condition"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              )))}
+            </div>
+
             <div className="builder-row">
-              <span className="builder-label">WHERE</span>
+              <span className="builder-label">GROUP BY</span>
+              <div className="drop-zone">
+                <select
+                  className="builder-select"
+                  value={groupByField ?? ''}
+                  onChange={(e) => setGroupByField(e.target.value || null)}
+                  aria-label="GROUP BY field"
+                >
+                  <option value="">None (optional)</option>
+                  {schema.columns.map((col) => (
+                    <option key={col} value={col}>{col}</option>
+                  ))}
+                </select>
+                {groupByField && (
+                  <button 
+                    className="token-pill" 
+                    onClick={() => setGroupByField(null)}
+                    title="Remove GROUP BY"
+                  >
+                    Clear ×
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="builder-row">
+              <span className="builder-label">ORDER BY</span>
               <div className="drop-zone where-zone">
-                <div
-                  className="drop-slot"
-                  onDragOver={allowDrop}
-                  onDrop={(event) => handleDrop(event, 'field')}
+                <select
+                  className="builder-select"
+                  value={orderByField ?? ''}
+                  onChange={(e) => setOrderByField(e.target.value || null)}
+                  aria-label="ORDER BY field"
                 >
-                  {whereField ? (
-                    <button className="token-pill" onClick={() => setWhereField(null)}>{whereField}</button>
-                  ) : (
-                    <span className="drop-placeholder">field</span>
-                  )}
-                </div>
-                <div
-                  className="drop-slot"
-                  onDragOver={allowDrop}
-                  onDrop={(event) => handleDrop(event, 'operator')}
+                  <option value="">None (optional)</option>
+                  {schema.columns.map((col) => (
+                    <option key={col} value={col}>{col}</option>
+                  ))}
+                </select>
+                <select
+                  className="builder-select builder-select-small"
+                  value={orderByDirection}
+                  onChange={(e) => setOrderByDirection(e.target.value)}
+                  disabled={!orderByField}
+                  aria-label="ORDER BY direction"
                 >
-                  {whereOp ? (
-                    <button className="token-pill token-pill-accent" onClick={() => setWhereOp('=')}>{whereOp}</button>
-                  ) : (
-                    <span className="drop-placeholder">operator</span>
-                  )}
-                </div>
-                <div
-                  className="drop-slot"
-                  onDragOver={allowDrop}
-                  onDrop={(event) => handleDrop(event, 'value')}
-                >
-                  {whereValue ? (
-                    <button className="token-pill token-pill-warm" onClick={() => setWhereValue(null)}>{whereValue}</button>
-                  ) : (
-                    <span className="drop-placeholder">value</span>
-                  )}
-                </div>
+                  {ORDER_DIRECTIONS.map((dir) => (
+                    <option key={dir} value={dir}>{dir}</option>
+                  ))}
+                </select>
+                {orderByField && (
+                  <button 
+                    className="token-pill" 
+                    onClick={() => setOrderByField(null)}
+                    title="Remove ORDER BY"
+                  >
+                    Clear ×
+                  </button>
+                )}
               </div>
             </div>
           </div>
 
           <div className="builder-preview">
             <div className="builder-panel-title">SQL Preview</div>
-            {!isWhereComplete && (whereField || whereValue) && (
-              <div className="builder-warning">Complete the WHERE field and value to activate filtering.</div>
-            )}
             <div className="preview-box">
               {previewSql}
             </div>

@@ -1,0 +1,19 @@
+{
+  "id": "level2-mission7",
+  "level": 2,
+  "title": "Expansion Plan",
+  "description": "Modify an existing table structure by adding a new column using ALTER TABLE.",
+  "story": "The citizens table needs to track email addresses now. Add a new column called 'email' of type VARCHAR(100) to the existing citizens table.",
+  "hint": "ALTER TABLE citizens ADD COLUMN email VARCHAR(100);",
+  "xpReward": 1000,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS citizens CASCADE;",
+    "CREATE TABLE citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), age INT, district VARCHAR(50));",
+    "INSERT INTO citizens (name, age, district) VALUES ('Alice Johnson', 28, 'Downtown'), ('Bob Smith', 35, 'Uptown');"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["ALTER", "TABLE", "ADD", "COLUMN", "citizens"],
+    "mustContainValues": ["email"],
+    "expectedRowCountAfter": 2
+  }
+}

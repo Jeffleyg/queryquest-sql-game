@@ -1,0 +1,14 @@
+{
+  "id": "level1-mission2",
+  "title": "Age Verification",
+  "level": 1,
+  "description": "Find all citizens who are 21 years old or older.",
+  "story": "The city council needs a list of all eligible voters. Your task is to query the citizens table and find everyone who is at least 21 years old. This is crucial for the upcoming election!",
+  "hint": "Use the >= operator in your WHERE clause to filter by age.",
+  "xpReward": 150,
+  "tableSetup": "CREATE TABLE IF NOT EXISTS citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), district VARCHAR(50), age INTEGER); INSERT INTO citizens (name, district, age) VALUES ('Alice', 'Downtown', 28), ('Bob', 'Uptown', 34), ('Carol', 'Downtown', 22), ('David', 'Midtown', 45), ('Eve', 'Downtown', 19), ('Frank', 'Uptown', 18), ('Grace', 'Midtown', 29) ON CONFLICT DO NOTHING;",
+  "validationRules": {
+    "requiredKeywords": ["SELECT", "FROM", "WHERE"],
+    "forbiddenKeywords": []
+  }
+}

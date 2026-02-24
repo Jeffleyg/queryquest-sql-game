@@ -1,0 +1,22 @@
+{
+  "id": "level2-mission1",
+  "level": 2,
+  "title": "Team Up",
+  "description": "Combine data from multiple tables using INNER JOIN to find relationships between citizens and their jobs.",
+  "story": "The city database is split into multiple tables. You need to connect citizens with their employment records to find who works where.",
+  "hint": "Use INNER JOIN to combine the citizens table with the jobs table. Match them using the citizen_id field.",
+  "xpReward": 700,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS jobs CASCADE;",
+    "DROP TABLE IF EXISTS citizens CASCADE;",
+    "CREATE TABLE citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), age INT, district VARCHAR(50));",
+    "CREATE TABLE jobs (id SERIAL PRIMARY KEY, citizen_id INT, company VARCHAR(100), position VARCHAR(100), salary INT);",
+    "INSERT INTO citizens (name, age, district) VALUES ('Alice Johnson', 28, 'Downtown'), ('Bob Smith', 35, 'Uptown'), ('Charlie Brown', 42, 'Midtown');",
+    "INSERT INTO jobs (citizen_id, company, position, salary) VALUES (1, 'Tech Corp', 'Engineer', 75000), (2, 'Finance Ltd', 'Analyst', 65000), (3, 'Media Inc', 'Designer', 55000);"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["JOIN", "citizens", "jobs"],
+    "expectedColumns": ["name", "company", "position"],
+    "minRows": 3
+  }
+}

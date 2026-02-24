@@ -1,0 +1,19 @@
+{
+  "id": "level2-mission4",
+  "level": 2,
+  "title": "Address Change",
+  "description": "Update a citizen's district when they move to a new neighborhood using UPDATE statement.",
+  "story": "Alice Johnson is moving from Downtown to Uptown. Update her district in the database to reflect the change.",
+  "hint": "Use UPDATE citizens SET district = 'Uptown' WHERE name = 'Alice Johnson'. Always use WHERE to target specific records!",
+  "xpReward": 850,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS citizens CASCADE;",
+    "CREATE TABLE citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), age INT, district VARCHAR(50));",
+    "INSERT INTO citizens (name, age, district) VALUES ('Alice Johnson', 28, 'Downtown'), ('Bob Smith', 35, 'Uptown'), ('Charlie Brown', 42, 'Midtown');"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["UPDATE", "SET", "WHERE", "citizens"],
+    "mustContainValues": ["Uptown", "Alice Johnson"],
+    "expectedRowCountAfter": 3
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "level1-mission4",
+  "title": "Count the Population",
+  "level": 1,
+  "description": "Count how many citizens live in each district.",
+  "story": "City planners need population statistics by district. Use the citizens table to count how many people live in each area. This data will inform infrastructure decisions!",
+  "hint": "Use COUNT(*) and GROUP BY to count citizens per district.",
+  "xpReward": 250,
+  "tableSetup": "CREATE TABLE IF NOT EXISTS citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), district VARCHAR(50), age INTEGER); INSERT INTO citizens (name, district, age) VALUES ('Alice', 'Downtown', 28), ('Bob', 'Uptown', 34), ('Carol', 'Downtown', 22), ('David', 'Midtown', 45), ('Eve', 'Downtown', 19), ('Frank', 'Uptown', 18), ('Grace', 'Midtown', 29), ('Henry', 'Downtown', 31), ('Iris', 'Uptown', 26) ON CONFLICT DO NOTHING;",
+  "validationRules": {
+    "requiredKeywords": ["SELECT", "FROM", "GROUP BY", "COUNT"],
+    "forbiddenKeywords": []
+  }
+}

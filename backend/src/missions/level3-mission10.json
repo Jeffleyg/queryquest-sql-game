@@ -1,0 +1,25 @@
+{
+  "id": "level3-mission10",
+  "level": 3,
+  "title": "Master Query Challenge",
+  "description": "Ultimate challenge: Combine COALESCE, multiple JOINs, CASE, and complex aggregations in a single query.",
+  "story": "The mayor wants a comprehensive city report! Join citizens, jobs, and districts tables. Show each district with: total population, employed count, average salary (or 0 if none), and employment status ('High' if >60% employed, 'Medium' if 30-60%, 'Low' otherwise).",
+  "hint": "Use LEFT JOIN to keep all districts, COALESCE for NULL salaries, COUNT for population, CASE for categorization, and GROUP BY for aggregation.",
+  "xpReward": 2500,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS jobs CASCADE;",
+    "DROP TABLE IF EXISTS citizens CASCADE;",
+    "DROP TABLE IF EXISTS districts CASCADE;",
+    "CREATE TABLE districts (id SERIAL PRIMARY KEY, name VARCHAR(100), zone VARCHAR(50));",
+    "CREATE TABLE citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), age INT, district_id INT);",
+    "CREATE TABLE jobs (id SERIAL PRIMARY KEY, citizen_id INT, position VARCHAR(100), salary INT, status VARCHAR(50));",
+    "INSERT INTO districts (name, zone) VALUES ('Downtown', 'North'), ('Uptown', 'South'), ('Midtown', 'Central'), ('Oldtown', 'East');",
+    "INSERT INTO citizens (name, age, district_id) VALUES ('Alice', 28, 1), ('Bob', 35, 1), ('Charlie', 42, 2), ('Diana', 30, 2), ('Eve', 33, 3), ('Frank', 29, 3), ('Grace', 27, 3), ('Henry', 45, 4);",
+    "INSERT INTO jobs (citizen_id, position, salary, status) VALUES (1, 'Engineer', 85000, 'Active'), (2, 'Analyst', 75000, 'Active'), (3, 'Designer', 70000, 'Active'), (5, 'Manager', 95000, 'Active'), (6, 'Developer', 80000, 'Active');"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["JOIN", "GROUP", "BY", "districts"],
+    "expectedColumns": ["name"],
+    "minRows": 4
+  }
+}

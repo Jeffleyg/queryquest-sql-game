@@ -1,0 +1,19 @@
+{
+  "id": "level2-mission9",
+  "level": 2,
+  "title": "Nested Intelligence",
+  "description": "Use a subquery to find citizens who earn more than the average salary.",
+  "story": "Management wants to identify high earners. Find all citizens whose salary is above the company average using a subquery.",
+  "hint": "SELECT name, salary FROM citizens WHERE salary > (SELECT AVG(salary) FROM citizens);",
+  "xpReward": 1200,
+  "tableSetup": [
+    "DROP TABLE IF EXISTS citizens CASCADE;",
+    "CREATE TABLE citizens (id SERIAL PRIMARY KEY, name VARCHAR(100), age INT, salary INT);",
+    "INSERT INTO citizens (name, age, salary) VALUES ('Alice Johnson', 28, 85000), ('Bob Smith', 35, 65000), ('Charlie Brown', 42, 95000), ('Diana Prince', 30, 55000), ('Eve Anderson', 33, 75000);"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["SELECT", "WHERE", "AVG"],
+    "expectedColumns": ["name", "salary"],
+    "minRows": 2
+  }
+}
