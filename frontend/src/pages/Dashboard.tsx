@@ -1,62 +1,46 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import api from '../utils/api';
 import Header from '../components/Header';
 import MissionCard from '../components/MissionCard';
-import type { Mission, PlayerProgress } from '../types';
-import { loadPlayerProgress, savePlayerProgress, getDefaultProgress, getPlayerId } from '../utils/playerStorage';
+import type { Mission } from '../types';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [missions, setMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [playerProgress, setPlayerProgress] = useState<PlayerProgress>(
-    loadPlayerProgress() || getDefaultProgress()
-  );
+  const [playerProgress, setPlayerProgress] = useState<any>(null);
+  
+  const username = localStorage.getItem('username') || 'Player';
 
   useEffect(() => {
     // Load progress from backend
-    const playerId = getPlayerId();
-    axios
-      .get<PlayerProgress>(`/api/progress?playerId=${playerId}`)
-      .then((res) => {
-        setPlayerProgress(res.data);
-        savePlayerProgress(res.data);
-      })
-      .catch(() => {
-        // If backend fails, use local storage
-        const local = loadPlayerProgress();
-        if (local) setPlayerProgress(local);
-      });
+    api.get('/progress')
+      .then((res) => setPlayerProgress(res.data))
+      .catch(() => console.error('Failed to load progress'));
 
     // Load missions
-    axios
-      .get<Mission[]>('/api/missions')
+    api.get<Mission[]>('/missions')
       .then((res) => setMissions(res.data))
       .catch(() => setError('Failed to load missions. Is the backend running?'))
       .finally(() => setLoading(false));
   }, []);
 
-  const player = {
+  const player = playerProgress ? {
     level: playerProgress.currentLevel,
     xp: playerProgress.currentXP,
     xpToNextLevel: playerProgress.xpToNextLevel,
     completedMissions: playerProgress.completedMissions,
+  } : { level: 1, xp: 0, xpToNextLevel: 500, completedMissions: [] };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate('/login');
   };
 
   const handleResetProgress = async () => {
-    if (!confirm('Are you sure you want to reset all progress? This cannot be undone.')) return;
-    
-    const playerId = getPlayerId();
-    try {
-      await axios.post('/api/progress/reset', { playerId });
-      const defaultProgress = getDefaultProgress();
-      setPlayerProgress(defaultProgress);
-      savePlayerProgress(defaultProgress);
-      window.location.reload();
-    } catch (err) {
-      console.error('Failed to reset progress:', err);
-      alert('Failed to reset progress. Please try again.');
-    }
+    alert('Reset functionality not implemented yet.');
   };
 
   return (
@@ -65,17 +49,22 @@ export default function Dashboard() {
       <main className="dashboard">
         <div className="dashboard-hero">
           <div className="hero-text">
-            <div className="hero-badge">Co-op mystery missions</div>
-            <h1>Welcome, Data Detective!</h1>
-            <p>Crack cases with friends, uncover clues, and learn SQL through puzzles, not lectures.</p>
+            <div className="hero-badge">Welcome back, {username}!</div>
+            <h1>Data Detective HQ</h1>
+            <p>Crack cases with SQL queries, uncover clues, and master database mysteries.</p>
             <div className="hero-stats">
               <div className="hero-stat">
                 <span className="hero-stat-label">Cases</span>
                 <span className="hero-stat-value">30+</span>
               </div>
               <div className="hero-stat">
-                <span className="hero-stat-label">Skills</span>
-                <span className="hero-stat-value">Advanced JOINs, Subqueries</span>
+                <span className="hero-stat-label">Your Level</span>
+                <span className="hero-stat-value">{player.level}</span>
+              </div>
+              <div className="hero-stat">
+                <button onClick={handleLogout} style={{background: 'rgba(239,68,68,0.2)', color: '#fca5a5', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer'}}>
+                  Logout
+                </button>
               </div>
             </div>
           </div>
@@ -120,8 +109,8 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="missions-grid">{missions.map((m) => {
-                const isUnlocked = playerProgress.unlockedMissions.includes(m.id);
-                const isCompleted = playerProgress.completedMissions.includes(m.id);
+                const isUnlocked = playerProgress?.unlockedMissions?.includes(m.id) || false;
+                const isCompleted = playerProgress?.completedMissions?.includes(m.id) || false;
                 return (
                   <MissionCard 
                     key={m.id} 

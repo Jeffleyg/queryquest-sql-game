@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { executeUserQuery } from '../controllers/queryController';
+import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 
@@ -12,6 +13,6 @@ const queryLimiter = rateLimit({
   message: { success: false, feedback: 'Too many queries. Please wait a moment.' },
 });
 
-router.post('/', queryLimiter, executeUserQuery);
+router.post('/', authenticateToken, queryLimiter, executeUserQuery);
 
 export default router;

@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import Header from '../components/Header';
 import QueryBuilder from '../components/QueryBuilder';
 import SqlEditor from '../components/SqlEditor';
 import ResultsPanel from '../components/ResultsPanel';
 import { HelpModal } from '../components/HelpModal';
 import type { Mission, QueryResult, PlayerProgress } from '../types';
-import { loadPlayerProgress, savePlayerProgress, getDefaultProgress, getPlayerId } from '../utils/playerStorage';
 
 export default function MissionPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,29 +21,32 @@ export default function MissionPage() {
   const [result, setResult] = useState<QueryResult | null>(null);
   const [running, setRunning] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [playerProgress, setPlayerProgress] = useState<PlayerProgress>(
-    loadPlayerProgress() || getDefaultProgress()
-  );
+  const [playerProgress, setPlayerProgress] = useState<any>(null);
 
-  const player = {
+  const player = playerProgress ? {
     level: playerProgress.currentLevel,
     xp: playerProgress.currentXP,
     xpToNextLevel: playerProgress.xpToNextLevel,
     completedMissions: playerProgress.completedMissions,
-  };
+  } : { level: 1, xp: 0, xpToNextLevel: 500, completedMissions: [] };
+
+  // Load player progress
+  useEffect(() => {
+    api.get('/progress')
+      .then((res) => setPlayerProgress(res.data))
+      .catch(() => console.error('Failed to load progress'));
+  }, []);
 
   // Load all missions for navigation
   useEffect(() => {
-    axios
-      .get<Mission[]>('/api/missions')
+    api.get<Mission[]>('/missions')
       .then((res) => setAllMissions(res.data))
       .catch(() => console.error('Failed to load missions'));
   }, []);
 
   useEffect(() => {
     if (!id) return;
-    axios
-      .get<Mission>(`/api/missions/${id}`)
+    api.get<Mission>(`/missions/${id}`)
       .then((res) => {
         setMission(res.data);
         setSql('');
@@ -56,6 +58,7 @@ export default function MissionPage() {
 
   // Navigation logic
   const getUnlockedMissions = () => {
+    if (!playerProgress) return [];
     return allMissions.filter((m) => playerProgress.unlockedMissions.includes(m.id));
   };
 
@@ -83,24 +86,17 @@ export default function MissionPage() {
     setRunning(true);
     setResult(null);
     try {
-      const playerId = getPlayerId();
-      const res = await axios.post<QueryResult>('/api/query', {
+      const res = await api.post<QueryResult>('/query', {
         sql,
         missionId: id,
-        playerId,
       });
       setResult(res.data);
       
-      // Update player progress if returned from server
-      if (res.data.playerProgress) {
-        setPlayerProgress(res.data.playerProgress);
-        savePlayerProgress(res.data.playerProgress);
-      }
-    } catch (err) {
-      const message =
-        axios.isAxiosError(err) && err.response?.data?.feedback
-          ? (err.response.data as QueryResult).feedback
-          : 'An error occurred while running the query.';
+      // Refresh progress after query
+      const progressRes = await api.get('/progress');
+      setPlayerProgress(progressRes.data);
+    } catch (err: any) {
+      const message = err.response?.data?.feedback || 'An error occurred while running the query.';
       setResult({ success: false, columns: [], rows: [], rowCount: 0, feedback: message });
     } finally {
       setRunning(false);
