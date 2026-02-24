@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile, signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../utils/firebase';
 import '../styles/Auth.css';
 
 export default function RegisterPage() {
@@ -51,24 +53,47 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/register', {
+      const credentials = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(credentials.user, { displayName: username });
+      await sendEmailVerification(credentials.user);
+
+      const idToken = await credentials.user.getIdToken();
+      await axios.post('http://localhost:3001/api/auth/firebase', {
+        idToken,
         username,
-        email,
-        password,
       });
 
-      // Save token and user data
+      navigate('/pending-verification', { state: { email } });
+    } catch (err: any) {
+      const message = err.response?.data?.error || err.message || 'Registration failed. Please try again.';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleGoogleRegister() {
+    setError('');
+    setLoading(true);
+
+    try {
+      const credentials = await signInWithPopup(auth, googleProvider);
+      const idToken = await credentials.user.getIdToken();
+      const response = await axios.post('http://localhost:3001/api/auth/firebase', {
+        idToken,
+        username,
+      });
+
       localStorage.setItem('authToken', response.data.token);
       localStorage.setItem('userId', response.data.user.id);
       localStorage.setItem('username', response.data.user.username);
       localStorage.setItem('userEmail', response.data.user.email);
       localStorage.setItem('isVerified', response.data.user.isVerified);
 
-      // Show success message and redirect
-      alert('Registration successful! Please check your email to verify your account.');
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
+      const message = err.response?.data?.error || err.message || 'Google signup failed. Please try again.';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -140,6 +165,14 @@ export default function RegisterPage() {
 
           <button type="submit" className="auth-button" disabled={loading}>
             {loading ? '⏳ Creating account...' : '🚀 Create Account'}
+          </button>
+
+          <div className="auth-divider">
+            <span>or</span>
+          </div>
+
+          <button type="button" className="auth-button google-button" onClick={handleGoogleRegister} disabled={loading}>
+            {loading ? '⏳ Connecting...' : 'Continue with Google'}
           </button>
         </form>
 

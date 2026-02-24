@@ -65,6 +65,67 @@ QueryQuest transforms SQL learning into an engaging adventure where students com
    
    Navigate to `http://localhost:5173` to start playing!
 
+### Firebase Auth setup
+
+1. **Create a Firebase project**
+   - Go to https://console.firebase.google.com/
+   - Create a project and add a Web app
+
+2. **Enable Authentication providers**
+   - In Authentication, enable **Google** and **Email/Password**
+
+3. **Frontend env vars**
+   - Create or edit `frontend/.env` with your Firebase web config:
+   ```bash
+   VITE_FIREBASE_API_KEY=...
+   VITE_FIREBASE_AUTH_DOMAIN=...
+   VITE_FIREBASE_PROJECT_ID=...
+   VITE_FIREBASE_STORAGE_BUCKET=...
+   VITE_FIREBASE_MESSAGING_SENDER_ID=...
+   VITE_FIREBASE_APP_ID=...
+   VITE_FIREBASE_MEASUREMENT_ID=...
+   ```
+
+4. **Backend service account**
+   - Create a service account JSON in Firebase Console
+   - Set `FIREBASE_SERVICE_ACCOUNT_PATH` in your backend environment, for example:
+   ```bash
+   FIREBASE_SERVICE_ACCOUNT_PATH=C:\\path\\to\\firebase-service-account.json
+   ```
+
+5. **Update database schema (if needed)**
+   - If the database already exists, run:
+   ```sql
+   ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
+   ALTER TABLE users ADD COLUMN IF NOT EXISTS firebase_uid VARCHAR(255) UNIQUE;
+   ```
+
+### Firebase Hosting (optional)
+
+If you want to deploy the frontend on Firebase Hosting:
+
+1. **Install Firebase CLI**
+   ```bash
+   npm install -g firebase-tools
+   ```
+
+2. **Login and init**
+   ```bash
+   firebase login
+   firebase init
+   ```
+   - Choose **Hosting**
+   - Set the public directory to `frontend/dist`
+   - Use `true` for single-page app rewrite
+
+3. **Build and deploy**
+   ```bash
+   cd frontend
+   npm run build
+   cd ..
+   firebase deploy
+   ```
+
 ## 🏗️ Project Structure
 
 ```

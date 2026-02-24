@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../utils/firebase';
 import '../styles/Auth.css';
 
 export default function LoginPage() {
@@ -16,9 +18,10 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/login', {
-        email,
-        password,
+      const credentials = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = await credentials.user.getIdToken();
+      const response = await axios.post('http://localhost:3001/api/auth/firebase', {
+        idToken,
       });
 
       // Save token and user data
@@ -31,7 +34,34 @@ export default function LoginPage() {
       // Redirect to dashboard
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed. Please try again.');
+      const message = err.response?.data?.error || err.message || 'Login failed. Please try again.';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleGoogleLogin() {
+    setError('');
+    setLoading(true);
+
+    try {
+      const credentials = await signInWithPopup(auth, googleProvider);
+      const idToken = await credentials.user.getIdToken();
+      const response = await axios.post('http://localhost:3001/api/auth/firebase', {
+        idToken,
+      });
+
+      localStorage.setItem('authToken', response.data.token);
+      localStorage.setItem('userId', response.data.user.id);
+      localStorage.setItem('username', response.data.user.username);
+      localStorage.setItem('userEmail', response.data.user.email);
+      localStorage.setItem('isVerified', response.data.user.isVerified);
+
+      navigate('/');
+    } catch (err: any) {
+      const message = err.response?.data?.error || err.message || 'Google login failed. Please try again.';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -75,6 +105,14 @@ export default function LoginPage() {
 
           <button type="submit" className="auth-button" disabled={loading}>
             {loading ? '⏳ Logging in...' : '🚀 Login'}
+          </button>
+
+          <div className="auth-divider">
+            <span>or</span>
+          </div>
+
+          <button type="button" className="auth-button google-button" onClick={handleGoogleLogin} disabled={loading}>
+            {loading ? '⏳ Connecting...' : 'Continue with Google'}
           </button>
         </form>
 

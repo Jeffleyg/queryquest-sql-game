@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
-import { createUser, verifyEmail, loginUser, requestPasswordReset, resetPassword, getUserById } from '../services/authService';
+import { createUser, verifyEmail, loginUser, requestPasswordReset, resetPassword, getUserById, getUserByFirebaseUid, createUserFromFirebase, updateUserVerification } from '../services/authService';
 import { generateToken } from '../middleware/auth';
+import { firebaseAdmin } from '../config/firebase';
 
 function getPasswordError(password: string): string | null {
   if (password.length < 8) {
@@ -195,5 +196,95 @@ export async function getProfile(req: Request, res: Response): Promise<void> {
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ error: 'Failed to get profile' });
+  }
+}
+
+export async function firebaseLogin(req: Request, res: Response): Promise<void> {
+  try {
+    const { idToken, username } = req.body;
+
+    if (!idToken) {
+      res.status(400).json({ error: 'Firebase ID token required' });
+      return;
+    }
+
+    const decoded = await firebaseAdmin.auth().verifyIdToken(idToken);
+    const email = decoded.email;
+
+    if (!email) {
+      res.status(400).json({ error: 'Firebase account must have an email' });
+      return;
+    }
+
+    const emailPrefix = email.split('@')[0];
+    const displayName = decoded.name || username || emailPrefix;
+    const isVerified = !!decoded.email_verified;
+
+    let user = await getUserByFirebaseUid(decoded.uid);
+
+    if (!user) {
+      user = await createUserFromFirebase(decoded.uid, email, displayName, isVerified);
+    } else if (isVerified && !user.is_verified) {
+      await updateUserVerification(user.id, true);
+      user.is_verified = true;
+    }
+
+    if (!user.is_verified) {
+      res.status(403).json({ error: 'Please verify your email before logging in.' });
+      return;
+    }
+
+    const token = generateToken(user.id);
+
+    res.json({
+      message: 'Login successful',
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        isVerified: user.is_verified,
+      },
+    });
+  } catch (error) {
+    console.error('Firebase login error:', error);
+    res.status(500).json({ error: 'Firebase login failed' });
+  }
+}
+
+export async function resendVerificationEmail(req: Request, res: Response): Promise<void> {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(400).json({ error: 'Email is required' });
+      return;
+    }
+
+    const user = await getUserById(email);
+    
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    if (user.is_verified) {
+      res.status(400).json({ error: 'Email already verified' });
+      return;
+    }
+
+    const verificationToken = (await import('uuid')).v4();
+
+    await (await import('../config/database')).default.query(
+      `UPDATE users SET verification_token = $1 WHERE email = $2`,
+      [verificationToken, email]
+    );
+
+    await (await import('../services/emailService')).sendVerificationEmail(email, verificationToken, user.username);
+
+    res.json({ message: 'Verification email sent successfully' });
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    res.status(500).json({ error: 'Failed to resend verification email' });
   }
 }

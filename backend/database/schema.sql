@@ -2,7 +2,8 @@
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
+  password_hash VARCHAR(255),
+  firebase_uid VARCHAR(255) UNIQUE,
   username VARCHAR(100) NOT NULL,
   is_verified BOOLEAN DEFAULT false,
   verification_token VARCHAR(255),

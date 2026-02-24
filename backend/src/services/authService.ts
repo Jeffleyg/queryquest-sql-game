@@ -9,6 +9,7 @@ export interface User {
   username: string;
   is_verified: boolean;
   created_at: Date;
+  firebase_uid?: string | null;
 }
 
 export interface PlayerProgress {
@@ -70,6 +71,93 @@ export async function createUser(email: string, password: string, username: stri
   }
 }
 
+export async function getUserByFirebaseUid(firebaseUid: string): Promise<User | null> {
+  const client = await pool.connect();
+
+  try {
+    const result = await client.query(
+      `SELECT id, email, username, is_verified, created_at, firebase_uid
+       FROM users WHERE firebase_uid = $1`,
+      [firebaseUid]
+    );
+
+    return result.rows.length > 0 ? result.rows[0] : null;
+  } finally {
+    client.release();
+  }
+}
+
+export async function createUserFromFirebase(
+  firebaseUid: string,
+  email: string,
+  username: string,
+  isVerified: boolean
+): Promise<User> {
+  const client = await pool.connect();
+
+  try {
+    const existingByEmail = await client.query(
+      `SELECT id, email, username, is_verified, created_at, firebase_uid
+       FROM users WHERE email = $1`,
+      [email]
+    );
+
+    if (existingByEmail.rows.length > 0) {
+      const existing = existingByEmail.rows[0] as User;
+      if (existing.firebase_uid && existing.firebase_uid !== firebaseUid) {
+        throw new Error('Email already linked to another account');
+      }
+
+      const updated = await client.query(
+        `UPDATE users
+         SET firebase_uid = $1, is_verified = $2, updated_at = NOW()
+         WHERE id = $3
+         RETURNING id, email, username, is_verified, created_at, firebase_uid`,
+        [firebaseUid, isVerified || existing.is_verified, existing.id]
+      );
+
+      return updated.rows[0];
+    }
+
+    const result = await client.query(
+      `INSERT INTO users (email, password_hash, username, is_verified, firebase_uid)
+       VALUES ($1, NULL, $2, $3, $4)
+       RETURNING id, email, username, is_verified, created_at, firebase_uid`,
+      [email, username, isVerified, firebaseUid]
+    );
+
+    const user = result.rows[0];
+
+    await client.query(
+      `INSERT INTO player_progress (user_id, current_level, current_xp, xp_to_next_level)
+       VALUES ($1, 1, 0, $2)`,
+      [user.id, XP_PER_LEVEL]
+    );
+
+    await client.query(
+      `INSERT INTO unlocked_missions (user_id, mission_id) VALUES ($1, 'level1-mission1')`,
+      [user.id]
+    );
+
+    return user;
+  } finally {
+    client.release();
+  }
+}
+
+export async function updateUserVerification(userId: string, isVerified: boolean): Promise<void> {
+  const client = await pool.connect();
+
+  try {
+    await client.query(
+      `UPDATE users SET is_verified = $1, updated_at = NOW() WHERE id = $2`,
+      [isVerified, userId]
+    );
+  } finally {
+    client.release();
+  }
+}
+
 export async function verifyEmail(token: string): Promise<boolean> {
   const client = await pool.connect();
   
@@ -102,6 +190,9 @@ export async function loginUser(email: string, password: string): Promise<User |
     }
 
     const user = result.rows[0];
+    if (!user.password_hash) {
+      return null;
+    }
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!passwordMatch) {
