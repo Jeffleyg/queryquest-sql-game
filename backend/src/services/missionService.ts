@@ -17,6 +17,7 @@ export interface Mission {
     expectedColumns?: string[];
     minRows?: number;
     expectedRowCountAfter?: number;
+    allowEmptyResult?: boolean;
     mustContainValues?: string[];
     mustNotExist?: string[];
   };

@@ -1,0 +1,21 @@
+{
+  "id": "level3-mission12",
+  "level": 3,
+  "title": "Query the View",
+  "description": "Use the project_summary view to list only open projects.",
+  "story": "Leadership only wants active initiatives. Query the view and return the projects that are still open.",
+  "hint": "Select from project_summary and filter by status = 'Open'.",
+  "xpReward": 1900,
+  "tableSetup": [
+    "DROP VIEW IF EXISTS project_summary;",
+    "DROP TABLE IF EXISTS projects CASCADE;",
+    "CREATE TABLE projects (id SERIAL PRIMARY KEY, name VARCHAR(100), status VARCHAR(20), budget INTEGER);",
+    "INSERT INTO projects (id, name, status, budget) VALUES (1, 'Metro Upgrade', 'Open', 120000), (2, 'River Cleanup', 'Closed', 80000), (3, 'Library Expansion', 'Open', 45000), (4, 'Park Renewal', 'Closed', 30000) ON CONFLICT (id) DO NOTHING;",
+    "CREATE VIEW project_summary AS SELECT name, status, budget FROM projects;"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["SELECT", "FROM", "PROJECT_SUMMARY", "WHERE", "OPEN"],
+    "expectedColumns": ["name", "status", "budget"],
+    "expectedRowCountAfter": 2
+  }
+}

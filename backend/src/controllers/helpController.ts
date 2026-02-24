@@ -8,6 +8,15 @@ interface SQLExample {
   category: string;
 }
 
+interface SQLManualSection {
+  title: string;
+  scenario: string;
+  schema: string;
+  exampleQuery: string;
+  explanation: string;
+  realWorld: string;
+}
+
 const SQL_EXAMPLES: SQLExample[] = [
   {
     title: 'Basic SELECT',
@@ -83,8 +92,61 @@ const SQL_EXAMPLES: SQLExample[] = [
   }
 ];
 
+const SQL_MANUAL: SQLManualSection[] = [
+  {
+    title: 'Store Orders (SELECT + WHERE)',
+    scenario: 'A store wants to see only pending orders to prepare shipments.',
+    schema: [
+      'Table: orders',
+      'columns: id, customer_name, status, total'
+    ].join('\n'),
+    exampleQuery: "SELECT id, customer_name, total FROM orders WHERE status = 'Pending';",
+    explanation: 'Filters orders by status and returns only the fields needed for shipping.',
+    realWorld: 'Equivalent to a dispatch dashboard showing only orders awaiting shipment.'
+  },
+  {
+    title: 'District Summary (GROUP BY)',
+    scenario: 'City hall wants to know how many citizens live in each district.',
+    schema: [
+      'Table: citizens',
+      'columns: id, name, district, age'
+    ].join('\n'),
+    exampleQuery: 'SELECT district, COUNT(*) AS total FROM citizens GROUP BY district;',
+    explanation: 'Groups citizens by district and counts how many belong to each group.',
+    realWorld: 'Helps allocate public services and infrastructure by region.'
+  },
+  {
+    title: 'Orders and Customers (JOIN)',
+    scenario: 'The finance team needs to list orders together with customer names.',
+    schema: [
+      'Table: customers (id, name)',
+      'Table: orders (id, customer_id, total)'
+    ].join('\n'),
+    exampleQuery: 'SELECT c.name, o.id, o.total FROM customers c JOIN orders o ON o.customer_id = c.id;',
+    explanation: 'Connects orders with customers using the customer_id relationship key.',
+    realWorld: 'Generates revenue reports per customer.'
+  },
+  {
+    title: 'Quick View (VIEW)',
+    scenario: 'The team wants a ready-made view of open projects for quick access.',
+    schema: [
+      'Table: projects (id, name, status, budget)'
+    ].join('\n'),
+    exampleQuery: [
+      'CREATE VIEW open_projects AS',
+      "SELECT name, budget FROM projects WHERE status = 'Open';"
+    ].join('\n'),
+    explanation: 'Creates a reusable view for frequent queries without rewriting SQL.',
+    realWorld: 'Acts like a fixed dashboard with always-ready information for leadership.'
+  }
+];
+
 export function getExamples(req: Request, res: Response): void {
   res.json({ examples: SQL_EXAMPLES });
+}
+
+export function getManual(req: Request, res: Response): void {
+  res.json({ sections: SQL_MANUAL });
 }
 
 export function getMissionHints(req: Request, res: Response): void {

@@ -102,7 +102,12 @@ export async function executeUserQuery(req: AuthRequest, res: Response): Promise
       } else if (rules.expectedRowCountAfter && rowCount !== rules.expectedRowCountAfter) {
         success = false;
         feedback = `Expected exactly ${rules.expectedRowCountAfter} rows after operation, but got ${rowCount}. Check your query!`;
-      } else if (rowCount === 0 && !rules.minRows && !rules.expectedRowCountAfter) {
+      } else if (
+        rowCount === 0 &&
+        !rules.minRows &&
+        !rules.expectedRowCountAfter &&
+        !rules.allowEmptyResult
+      ) {
         success = false;
         feedback = 'Your query ran but returned no rows. Try adjusting your conditions or check the table data.';
       }

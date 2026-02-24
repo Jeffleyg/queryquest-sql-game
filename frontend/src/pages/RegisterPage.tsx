@@ -12,6 +12,22 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const getPasswordError = (value: string) => {
+    if (value.length < 8) {
+      return 'Password must be at least 8 characters long.';
+    }
+
+    const hasUppercase = /[A-Z]/.test(value);
+    const hasLowercase = /[a-z]/.test(value);
+    const hasNumber = /\d/.test(value);
+
+    if (!hasUppercase || !hasLowercase || !hasNumber) {
+      return 'Password must include an uppercase letter, a lowercase letter, and a number.';
+    }
+
+    return null;
+  };
+
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -21,8 +37,9 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    const passwordError = getPasswordError(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
@@ -103,8 +120,9 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              minLength={6}
+              minLength={8}
             />
+            <small className="auth-hint">At least 8 characters, with uppercase, lowercase, and a number.</small>
           </div>
 
           <div className="form-group">
@@ -116,6 +134,7 @@ export default function RegisterPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
               required
+              minLength={8}
             />
           </div>
 

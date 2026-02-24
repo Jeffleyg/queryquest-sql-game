@@ -8,6 +8,15 @@ interface SQLExample {
   category: string;
 }
 
+interface SQLManualSection {
+  title: string;
+  scenario: string;
+  schema: string;
+  exampleQuery: string;
+  explanation: string;
+  realWorld: string;
+}
+
 interface HelpModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -18,12 +27,14 @@ interface HelpModalProps {
 export function HelpModal({ isOpen, onClose, currentMissionId, onUseTemplate }: HelpModalProps) {
   const [examples, setExamples] = useState<SQLExample[]>([]);
   const [template, setTemplate] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'examples' | 'template'>('examples');
+  const [manualSections, setManualSections] = useState<SQLManualSection[]>([]);
+  const [activeTab, setActiveTab] = useState<'examples' | 'template' | 'manual'>('examples');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   useEffect(() => {
     if (isOpen) {
       fetchExamples();
+      fetchManual();
       if (currentMissionId) {
         fetchTemplate();
       }
@@ -47,6 +58,16 @@ export function HelpModal({ isOpen, onClose, currentMissionId, onUseTemplate }: 
       setTemplate(data.template);
     } catch (error) {
       console.error('Failed to fetch template:', error);
+    }
+  };
+
+  const fetchManual = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/help/manual');
+      const data = await response.json();
+      setManualSections(data.sections);
+    } catch (error) {
+      console.error('Failed to fetch manual:', error);
     }
   };
 
@@ -78,6 +99,12 @@ export function HelpModal({ isOpen, onClose, currentMissionId, onUseTemplate }: 
             onClick={() => setActiveTab('examples')}
           >
             Examples
+          </button>
+          <button 
+            className={activeTab === 'manual' ? 'active' : ''}
+            onClick={() => setActiveTab('manual')}
+          >
+            Manual
           </button>
           {currentMissionId && (
             <button 
@@ -137,6 +164,38 @@ export function HelpModal({ isOpen, onClose, currentMissionId, onUseTemplate }: 
               >
                 Use Template
               </button>
+            </div>
+          )}
+
+          {activeTab === 'manual' && (
+            <div className="manual-section">
+              {manualSections.map((section, index) => (
+                <div key={index} className="manual-card">
+                  <div className="manual-header">
+                    <h3>{section.title}</h3>
+                    <span className="manual-badge">Vida real</span>
+                  </div>
+                  <p className="manual-scenario">{section.scenario}</p>
+                  <div className="manual-grid">
+                    <div className="manual-block">
+                      <div className="manual-label">Schema</div>
+                      <pre className="manual-code">{section.schema}</pre>
+                    </div>
+                    <div className="manual-block">
+                      <div className="manual-label">SQL</div>
+                      <pre className="manual-code">{section.exampleQuery}</pre>
+                      <button
+                        className="use-button"
+                        onClick={() => handleUseExample(section.exampleQuery)}
+                      >
+                        Use this query
+                      </button>
+                    </div>
+                  </div>
+                  <p className="manual-explanation">{section.explanation}</p>
+                  <div className="manual-real-world">{section.realWorld}</div>
+                </div>
+              ))}
             </div>
           )}
         </div>

@@ -2,6 +2,22 @@ import { Request, Response } from 'express';
 import { createUser, verifyEmail, loginUser, requestPasswordReset, resetPassword, getUserById } from '../services/authService';
 import { generateToken } from '../middleware/auth';
 
+function getPasswordError(password: string): string | null {
+  if (password.length < 8) {
+    return 'Password must be at least 8 characters long.';
+  }
+
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasNumber = /\d/.test(password);
+
+  if (!hasUppercase || !hasLowercase || !hasNumber) {
+    return 'Password must include an uppercase letter, a lowercase letter, and a number.';
+  }
+
+  return null;
+}
+
 export async function register(req: Request, res: Response): Promise<void> {
   try {
     const { email, password, username } = req.body;
@@ -12,8 +28,9 @@ export async function register(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    if (password.length < 6) {
-      res.status(400).json({ error: 'Password must be at least 6 characters' });
+    const passwordError = getPasswordError(password);
+    if (passwordError) {
+      res.status(400).json({ error: passwordError });
       return;
     }
 
@@ -58,6 +75,11 @@ export async function login(req: Request, res: Response): Promise<void> {
 
     if (!user) {
       res.status(401).json({ error: 'Invalid email or password' });
+      return;
+    }
+
+    if (!user.is_verified) {
+      res.status(403).json({ error: 'Please verify your email before logging in.' });
       return;
     }
 
@@ -131,8 +153,9 @@ export async function reset(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    if (password.length < 6) {
-      res.status(400).json({ error: 'Password must be at least 6 characters' });
+    const passwordError = getPasswordError(password);
+    if (passwordError) {
+      res.status(400).json({ error: passwordError });
       return;
     }
 

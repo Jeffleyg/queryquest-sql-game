@@ -6,6 +6,7 @@ import QueryBuilder from '../components/QueryBuilder';
 import SqlEditor from '../components/SqlEditor';
 import ResultsPanel from '../components/ResultsPanel';
 import { HelpModal } from '../components/HelpModal';
+import { useSettings } from '../hooks/useSettings';
 import type { Mission, QueryResult, PlayerProgress } from '../types';
 
 export default function MissionPage() {
@@ -16,12 +17,16 @@ export default function MissionPage() {
   const [allMissions, setAllMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [progressLoading, setProgressLoading] = useState(true);
+  const [missionsLoading, setMissionsLoading] = useState(true);
   const [sql, setSql] = useState('');
   const [sqlPreview, setSqlPreview] = useState('');
   const [result, setResult] = useState<QueryResult | null>(null);
   const [running, setRunning] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [playerProgress, setPlayerProgress] = useState<any>(null);
+  const [hintVisible, setHintVisible] = useState(true);
+  const { settings } = useSettings();
 
   const player = playerProgress ? {
     level: playerProgress.currentLevel,
@@ -34,14 +39,16 @@ export default function MissionPage() {
   useEffect(() => {
     api.get('/progress')
       .then((res) => setPlayerProgress(res.data))
-      .catch(() => console.error('Failed to load progress'));
+      .catch(() => console.error('Failed to load progress'))
+      .finally(() => setProgressLoading(false));
   }, []);
 
   // Load all missions for navigation
   useEffect(() => {
     api.get<Mission[]>('/missions')
       .then((res) => setAllMissions(res.data))
-      .catch(() => console.error('Failed to load missions'));
+      .catch(() => console.error('Failed to load missions'))
+      .finally(() => setMissionsLoading(false));
   }, []);
 
   useEffect(() => {
@@ -51,10 +58,11 @@ export default function MissionPage() {
         setMission(res.data);
         setSql('');
         setSqlPreview('');
+        setHintVisible(settings.showHints);
       })
       .catch(() => setError('Mission not found.'))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, settings.showHints]);
 
   // Navigation logic
   const getUnlockedMissions = () => {
@@ -145,6 +153,13 @@ export default function MissionPage() {
             </button>
           </div>
 
+            {(progressLoading || missionsLoading) && (
+              <div className="sidebar-status">Loading your mission map…</div>
+            )}
+            {!progressLoading && !missionsLoading && getUnlockedMissions().length === 0 && (
+              <div className="sidebar-status">No missions unlocked yet.</div>
+            )}
+
           <div className="mission-title-row">
             <span className="level-badge">Level {mission.level}</span>
             <span className="xp-badge">⚡ {mission.xpReward} XP</span>
@@ -153,7 +168,16 @@ export default function MissionPage() {
           <p className="mission-story">{mission.story}</p>
           <div className="mission-hint">
             <strong>💡 Hint</strong>
-            {mission.hint}
+            {hintVisible ? (
+              mission.hint
+            ) : (
+              <span className="hint-hidden">Hint hidden. Use settings to show hints.</span>
+            )}
+            {!hintVisible && (
+              <button className="btn-secondary btn-reveal" onClick={() => setHintVisible(true)}>
+                Reveal hint
+              </button>
+            )}
           </div>
           <div className="squad-panel">
             <div className="squad-header">
@@ -229,6 +253,7 @@ export default function MissionPage() {
               setSql(value);
               setSqlPreview(value);
             }}
+            theme={settings.editorTheme}
           />
           <div className="run-row">
             <button className="btn-run" onClick={handleRunQuery} disabled={running || !sql.trim()}>
@@ -237,7 +262,7 @@ export default function MissionPage() {
             <button className="btn-secondary" onClick={() => setSql('')}>Clear</button>
             <button className="btn-secondary" onClick={() => setHelpOpen(true)}>📚 Help</button>
           </div>
-          <ResultsPanel result={result} isLoading={running} />
+          <ResultsPanel result={result} isLoading={running} showCelebration={settings.showCelebration} />
         </section>
       </div>
       

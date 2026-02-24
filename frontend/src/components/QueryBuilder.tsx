@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Mission } from '../types';
 
-type TokenKind = 'field' | 'operator' | 'value';
-
 interface BuilderSchema {
   table: string;
   columns: string[];
@@ -36,6 +34,7 @@ const SCHEMA_BY_MISSION: Record<string, BuilderSchema> = {
 const OPERATORS = ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'IN', 'BETWEEN'];
 const ORDER_DIRECTIONS = ['ASC', 'DESC'];
 const AGGREGATE_FUNCTIONS = ['COUNT(*)', 'AVG', 'SUM', 'MIN', 'MAX'];
+const JOIN_TYPES = ['INNER', 'LEFT', 'RIGHT', 'FULL'];
 
 interface WhereCondition {
   field: string | null;
@@ -43,6 +42,13 @@ interface WhereCondition {
   value: string | null;
   value2?: string | null; // For BETWEEN operator
   logicalOp?: 'AND' | 'OR';
+}
+
+interface JoinClause {
+  type: string;
+  table: string;
+  alias: string;
+  on: string;
 }
 
 function formatValue(value: string): string {
@@ -53,85 +59,125 @@ function formatValue(value: string): string {
 }
 
 function buildSql(
-  table: string, 
-  selectFields: string[], 
+  table: string,
+  selectExpressions: string[],
+  joins: JoinClause[],
   whereConditions: WhereCondition[],
-  groupByField: string | null,
+  groupByFields: string[],
+  havingClause: string,
   orderByField: string | null,
-  orderByDirection: string
+  orderByDirection: string,
+  limitValue: string
 ) {
-  const selectClause = selectFields.length > 0 ? selectFields.join(', ') : '*';
+  const selectClause = selectExpressions.length > 0 ? selectExpressions.join(', ') : '*';
   let sql = `SELECT ${selectClause} FROM ${table}`;
-  
-  // Build WHERE clause with multiple conditions
-  const validConditions = whereConditions.filter(c => {
+
+  const validJoins = joins.filter((join) => join.table && join.on);
+  if (validJoins.length > 0) {
+    for (const join of validJoins) {
+      const alias = join.alias ? ` ${join.alias}` : '';
+      sql += ` ${join.type} JOIN ${join.table}${alias} ON ${join.on}`;
+    }
+  }
+
+  const validConditions = whereConditions.filter((c) => {
     if (c.operator === 'BETWEEN') {
       return c.field && c.value && c.value2;
     }
     return c.field && c.value;
   });
-  
+
   if (validConditions.length > 0) {
-    const whereClause = validConditions.map((condition, index) => {
-      let conditionStr: string;
-      if (condition.operator === 'BETWEEN') {
-        conditionStr = `${condition.field} BETWEEN ${formatValue(condition.value!)} AND ${formatValue(condition.value2!)}`;
-      } else {
-        conditionStr = `${condition.field} ${condition.operator} ${formatValue(condition.value!)}`;
-      }
-      if (index === 0) return conditionStr;
-      return ` ${condition.logicalOp || 'AND'} ${conditionStr}`;
-    }).join('');
+    const whereClause = validConditions
+      .map((condition, index) => {
+        let conditionStr: string;
+        if (condition.operator === 'BETWEEN') {
+          conditionStr = `${condition.field} BETWEEN ${formatValue(condition.value!)} AND ${formatValue(condition.value2!)}`;
+        } else {
+          conditionStr = `${condition.field} ${condition.operator} ${formatValue(condition.value!)}`;
+        }
+        if (index === 0) return conditionStr;
+        return ` ${condition.logicalOp || 'AND'} ${conditionStr}`;
+      })
+      .join('');
     sql += ` WHERE ${whereClause}`;
   }
-  
-  if (groupByField) {
-    sql += ` GROUP BY ${groupByField}`;
+
+  if (groupByFields.length > 0) {
+    sql += ` GROUP BY ${groupByFields.join(', ')}`;
   }
-  
+
+  if (havingClause.trim().length > 0) {
+    sql += ` HAVING ${havingClause.trim()}`;
+  }
+
   if (orderByField) {
     sql += ` ORDER BY ${orderByField} ${orderByDirection}`;
   }
-  
+
+  if (limitValue.trim().length > 0) {
+    sql += ` LIMIT ${limitValue.trim()}`;
+  }
+
   return `${sql};`;
 }
 
 function buildSqlPreview(
-  table: string, 
-  selectFields: string[], 
+  table: string,
+  selectExpressions: string[],
+  joins: JoinClause[],
   whereConditions: WhereCondition[],
-  groupByField: string | null,
+  groupByFields: string[],
+  havingClause: string,
   orderByField: string | null,
-  orderByDirection: string
+  orderByDirection: string,
+  limitValue: string
 ) {
-  const selectClause = selectFields.length > 0 ? selectFields.join(', ') : '*';
+  const selectClause = selectExpressions.length > 0 ? selectExpressions.join(', ') : '*';
   let sql = `SELECT ${selectClause} FROM ${table}`;
 
-  // Build WHERE clause preview
+  const validJoins = joins.filter((join) => join.table && join.on);
+  if (validJoins.length > 0) {
+    for (const join of validJoins) {
+      const alias = join.alias ? ` ${join.alias}` : '';
+      sql += ` ${join.type} JOIN ${join.table}${alias} ON ${join.on}`;
+    }
+  }
+
   if (whereConditions.length > 0) {
-    const whereClause = whereConditions.map((condition, index) => {
-      const field = condition.field ?? 'field';
-      let conditionStr: string;
-      if (condition.operator === 'BETWEEN') {
-        const value1 = condition.value ? formatValue(condition.value) : 'value1';
-        const value2 = condition.value2 ? formatValue(condition.value2) : 'value2';
-        conditionStr = `${field} BETWEEN ${value1} AND ${value2}`;
-      } else {
-        const value = condition.value ? formatValue(condition.value) : 'value';
-        conditionStr = `${field} ${condition.operator} ${value}`;
-      }
-      if (index === 0) return conditionStr;
-      return ` ${condition.logicalOp || 'AND'} ${conditionStr}`;
-    }).join('');
+    const whereClause = whereConditions
+      .map((condition, index) => {
+        const field = condition.field ?? 'field';
+        let conditionStr: string;
+        if (condition.operator === 'BETWEEN') {
+          const value1 = condition.value ? formatValue(condition.value) : 'value1';
+          const value2 = condition.value2 ? formatValue(condition.value2) : 'value2';
+          conditionStr = `${field} BETWEEN ${value1} AND ${value2}`;
+        } else {
+          const value = condition.value ? formatValue(condition.value) : 'value';
+          conditionStr = `${field} ${condition.operator} ${value}`;
+        }
+        if (index === 0) return conditionStr;
+        return ` ${condition.logicalOp || 'AND'} ${conditionStr}`;
+      })
+      .join('');
     sql += ` WHERE ${whereClause}`;
   }
-  
-  if (groupByField) {
-    sql += ` GROUP BY ${groupByField}`;
+
+  if (groupByFields.length > 0) {
+    sql += ` GROUP BY ${groupByFields.join(', ')}`;
   }
-  
+
+  if (havingClause.trim().length > 0) {
+    sql += ` HAVING ${havingClause.trim()}`;
+  }
+
   if (orderByField) {
     sql += ` ORDER BY ${orderByField} ${orderByDirection}`;
+  }
+
+  if (limitValue.trim().length > 0) {
+    sql += ` LIMIT ${limitValue.trim()}`;
   }
 
   return `${sql};`;
@@ -139,48 +185,68 @@ function buildSqlPreview(
 
 export default function QueryBuilder({ mission, onSqlChange, onPreviewChange, onReadyChange }: QueryBuilderProps) {
   const schema = useMemo(() => SCHEMA_BY_MISSION[mission.id] ?? DEFAULT_SCHEMA, [mission.id]);
-  const [selectFields, setSelectFields] = useState<string[]>(schema.defaultSelect ?? []);
+  const [selectExpressions, setSelectExpressions] = useState<string[]>(schema.defaultSelect ?? []);
+  const [joins, setJoins] = useState<JoinClause[]>([]);
   const [whereConditions, setWhereConditions] = useState<WhereCondition[]>([]);
-  const [groupByField, setGroupByField] = useState<string | null>(null);
+  const [groupByFields, setGroupByFields] = useState<string[]>([]);
+  const [havingClause, setHavingClause] = useState('');
   const [orderByField, setOrderByField] = useState<string | null>(null);
   const [orderByDirection, setOrderByDirection] = useState<string>('ASC');
+  const [limitValue, setLimitValue] = useState('');
+  const [newSelectExpression, setNewSelectExpression] = useState('');
+  const [newGroupByField, setNewGroupByField] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
   
   const previewSql = buildSqlPreview(
     schema.table, 
-    selectFields, 
+    selectExpressions,
+    joins,
     whereConditions,
-    groupByField,
+    groupByFields,
+    havingClause,
     orderByField,
-    orderByDirection
+    orderByDirection,
+    limitValue
   );
 
   useEffect(() => {
     onSqlChange(buildSql(
       schema.table, 
-      selectFields, 
+      selectExpressions,
+      joins,
       whereConditions,
-      groupByField,
+      groupByFields,
+      havingClause,
       orderByField,
-      orderByDirection
+      orderByDirection,
+      limitValue
     ));
     onPreviewChange?.(buildSqlPreview(
       schema.table, 
-      selectFields, 
+      selectExpressions,
+      joins,
       whereConditions,
-      groupByField,
+      groupByFields,
+      havingClause,
       orderByField,
-      orderByDirection
+      orderByDirection,
+      limitValue
     ));
     // Query is always ready - WHERE is optional
     onReadyChange?.(true);
-  }, [schema.table, selectFields, whereConditions, groupByField, orderByField, orderByDirection, onSqlChange, onPreviewChange, onReadyChange]);
+  }, [schema.table, selectExpressions, joins, whereConditions, groupByFields, havingClause, orderByField, orderByDirection, limitValue, onSqlChange, onPreviewChange, onReadyChange]);
 
   function resetBuilder() {
-    setSelectFields(schema.defaultSelect ?? []);
+    setSelectExpressions(schema.defaultSelect ?? []);
+    setJoins([]);
     setWhereConditions([]);
-    setGroupByField(null);
+    setGroupByFields([]);
+    setHavingClause('');
     setOrderByField(null);
     setOrderByDirection('ASC');
+    setLimitValue('');
+    setNewSelectExpression('');
+    setNewGroupByField('');
   }
 
   function addWhereCondition(logicalOp: 'AND' | 'OR' = 'AND') {
@@ -195,6 +261,32 @@ export default function QueryBuilder({ mission, onSqlChange, onPreviewChange, on
     setWhereConditions(prev => prev.map((condition, i) => 
       i === index ? { ...condition, ...updates } : condition
     ));
+  }
+
+  function addJoin() {
+    setJoins((prev) => [...prev, { type: 'INNER', table: '', alias: '', on: '' }]);
+  }
+
+  function updateJoin(index: number, updates: Partial<JoinClause>) {
+    setJoins((prev) => prev.map((join, i) => (i === index ? { ...join, ...updates } : join)));
+  }
+
+  function removeJoin(index: number) {
+    setJoins((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function addSelectExpression() {
+    const trimmed = newSelectExpression.trim();
+    if (!trimmed) return;
+    setSelectExpressions((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
+    setNewSelectExpression('');
+  }
+
+  function addGroupByField() {
+    const trimmed = newGroupByField.trim();
+    if (!trimmed) return;
+    setGroupByFields((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
+    setNewGroupByField('');
   }
 
   return (
@@ -218,11 +310,11 @@ export default function QueryBuilder({ mission, onSqlChange, onPreviewChange, on
                   key={col}
                   className="token-chip"
                   onClick={() => {
-                    if (!whereConditions[0]?.field) {
+                    if (whereConditions.length > 0 && !whereConditions[0]?.field) {
                       updateWhereCondition(0, { field: col });
-                    } else {
-                      setSelectFields((prev) => (prev.includes(col) ? prev : [...prev, col]));
+                      return;
                     }
+                    setSelectExpressions((prev) => (prev.includes(col) ? prev : [...prev, col]));
                   }}
                   title={`Click to ${!whereConditions[0]?.field ? 'set WHERE field' : 'add to SELECT'}`}
                 >
@@ -273,7 +365,7 @@ export default function QueryBuilder({ mission, onSqlChange, onPreviewChange, on
                   className="token-chip token-chip-accent"
                   onClick={() => {
                     const funcWithField = func === 'COUNT(*)' ? 'COUNT(*)' : `${func}(age)`;
-                    setSelectFields((prev) => (prev.includes(funcWithField) ? prev : [...prev, funcWithField]));
+                    setSelectExpressions((prev) => (prev.includes(funcWithField) ? prev : [...prev, funcWithField]));
                   }}
                   title={`Add ${func} to SELECT`}
                 >
@@ -290,17 +382,29 @@ export default function QueryBuilder({ mission, onSqlChange, onPreviewChange, on
             <div className="builder-row">
               <span className="builder-label">SELECT</span>
               <div className="drop-zone">
-                {selectFields.length === 0 && <span className="drop-placeholder">* (all fields)</span>}
-                {selectFields.map((field) => (
+                {selectExpressions.length === 0 && <span className="drop-placeholder">* (all fields)</span>}
+                {selectExpressions.map((field) => (
                   <button
                     key={field}
                     className="token-pill"
-                    onClick={() => setSelectFields((prev) => prev.filter((item) => item !== field))}
+                    onClick={() => setSelectExpressions((prev) => prev.filter((item) => item !== field))}
                     title="Click to remove"
                   >
                     {field} ×
                   </button>
                 ))}
+                <div className="select-input-row">
+                  <input
+                    type="text"
+                    className="builder-input"
+                    placeholder="Add expression (e.g. COUNT(*) AS total)"
+                    value={newSelectExpression}
+                    onChange={(e) => setNewSelectExpression(e.target.value)}
+                  />
+                  <button className="btn-add-condition" onClick={addSelectExpression}>
+                    Add
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -373,7 +477,7 @@ export default function QueryBuilder({ mission, onSqlChange, onPreviewChange, on
                     />
                     {condition.operator === 'BETWEEN' && (
                       <>
-                        <span style={{ color: 'var(--accent)', fontWeight: 700, padding: '0 0.5rem' }}>AND</span>
+                        <span className="between-label">AND</span>
                         <input
                           type="text"
                           className="builder-input"
@@ -403,27 +507,129 @@ export default function QueryBuilder({ mission, onSqlChange, onPreviewChange, on
             <div className="builder-row">
               <span className="builder-label">GROUP BY</span>
               <div className="drop-zone">
-                <select
-                  className="builder-select"
-                  value={groupByField ?? ''}
-                  onChange={(e) => setGroupByField(e.target.value || null)}
-                  aria-label="GROUP BY field"
-                >
-                  <option value="">None (optional)</option>
-                  {schema.columns.map((col) => (
-                    <option key={col} value={col}>{col}</option>
+                <div className="token-wrap">
+                  {groupByFields.length === 0 && (
+                    <span className="drop-placeholder">None (optional)</span>
+                  )}
+                  {groupByFields.map((field) => (
+                    <button
+                      key={field}
+                      className="token-pill"
+                      onClick={() => setGroupByFields((prev) => prev.filter((item) => item !== field))}
+                      title="Remove GROUP BY field"
+                    >
+                      {field} ×
+                    </button>
                   ))}
-                </select>
-                {groupByField && (
-                  <button 
-                    className="token-pill" 
-                    onClick={() => setGroupByField(null)}
-                    title="Remove GROUP BY"
-                  >
-                    Clear ×
+                </div>
+                <div className="select-input-row">
+                  <input
+                    type="text"
+                    className="builder-input"
+                    placeholder="Add group by field (e.g. district)"
+                    value={newGroupByField}
+                    onChange={(e) => setNewGroupByField(e.target.value)}
+                  />
+                  <button className="btn-add-condition" onClick={addGroupByField}>
+                    Add
                   </button>
-                )}
+                </div>
               </div>
+            </div>
+
+            <div className="builder-section">
+              <div className="builder-section-header">
+                <span className="builder-label">ADVANCED</span>
+                <button
+                  className="btn-secondary"
+                  onClick={() => setShowAdvanced((prev) => !prev)}
+                >
+                  {showAdvanced ? 'Hide' : 'Show'} advanced blocks
+                </button>
+              </div>
+
+              {showAdvanced && (
+                <div className="advanced-blocks">
+                  <div className="builder-row">
+                    <span className="builder-label">JOINS</span>
+                    <div className="drop-zone">
+                      <button className="btn-add-condition" onClick={addJoin}>+ Join</button>
+                      {joins.length === 0 && (
+                        <span className="drop-placeholder">No joins added yet.</span>
+                      )}
+                      {joins.map((join, index) => (
+                        <div key={index} className="join-row">
+                          <select
+                            className="builder-select builder-select-small"
+                            value={join.type}
+                            onChange={(e) => updateJoin(index, { type: e.target.value })}
+                            aria-label="Join type"
+                          >
+                            {JOIN_TYPES.map((type) => (
+                              <option key={type} value={type}>{type}</option>
+                            ))}
+                          </select>
+                          <input
+                            type="text"
+                            className="builder-input"
+                            placeholder="table"
+                            value={join.table}
+                            onChange={(e) => updateJoin(index, { table: e.target.value })}
+                          />
+                          <input
+                            type="text"
+                            className="builder-input builder-input-small"
+                            placeholder="alias"
+                            value={join.alias}
+                            onChange={(e) => updateJoin(index, { alias: e.target.value })}
+                          />
+                          <input
+                            type="text"
+                            className="builder-input builder-input-wide"
+                            placeholder="join condition (e.g. c.id = o.customer_id)"
+                            value={join.on}
+                            onChange={(e) => updateJoin(index, { on: e.target.value })}
+                          />
+                          <button
+                            className="btn-remove-condition"
+                            onClick={() => removeJoin(index)}
+                            title="Remove join"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="builder-row">
+                    <span className="builder-label">HAVING</span>
+                    <div className="drop-zone">
+                      <input
+                        type="text"
+                        className="builder-input builder-input-wide"
+                        placeholder="e.g. COUNT(*) > 3"
+                        value={havingClause}
+                        onChange={(e) => setHavingClause(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="builder-row">
+                    <span className="builder-label">LIMIT</span>
+                    <div className="drop-zone">
+                      <input
+                        type="number"
+                        min="1"
+                        className="builder-input builder-input-small"
+                        placeholder="e.g. 10"
+                        value={limitValue}
+                        onChange={(e) => setLimitValue(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="builder-row">

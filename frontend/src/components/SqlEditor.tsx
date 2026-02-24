@@ -3,9 +3,10 @@ import Editor from '@monaco-editor/react';
 interface SqlEditorProps {
   value: string;
   onChange: (value: string) => void;
+  theme?: 'vs-dark' | 'vs-light';
 }
 
-export default function SqlEditor({ value, onChange }: SqlEditorProps) {
+export default function SqlEditor({ value, onChange, theme = 'vs-dark' }: SqlEditorProps) {
   return (
     <div className="sql-editor-container">
       <div className="sql-editor-toolbar">
@@ -19,7 +20,7 @@ export default function SqlEditor({ value, onChange }: SqlEditorProps) {
         language="sql"
         value={value}
         onChange={(v) => onChange(v ?? '')}
-        theme="vs-dark"
+        theme={theme}
         options={{
           minimap: { enabled: false },
           fontSize: 14,

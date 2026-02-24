@@ -62,7 +62,7 @@ export default function Dashboard() {
                 <span className="hero-stat-value">{player.level}</span>
               </div>
               <div className="hero-stat">
-                <button onClick={handleLogout} style={{background: 'rgba(239,68,68,0.2)', color: '#fca5a5', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer'}}>
+                <button onClick={handleLogout} className="logout-button">
                   Logout
                 </button>
               </div>
@@ -121,7 +121,7 @@ export default function Dashboard() {
                 );
               })}
               {missions.length === 0 && (
-                <p style={{ color: 'var(--text-muted)' }}>No missions found.</p>
+                <p className="missions-empty">No missions found.</p>
               )}
             </div>
           </>

@@ -1,0 +1,19 @@
+{
+  "id": "level3-mission11",
+  "level": 3,
+  "title": "Project Summary View",
+  "description": "Create a view named project_summary that shows each project name and status.",
+  "story": "The planning office needs a stable view of project status. Build a view so the team can query project name and status quickly.",
+  "hint": "Use CREATE VIEW project_summary AS SELECT name, status FROM projects;",
+  "xpReward": 1800,
+  "tableSetup": [
+    "DROP VIEW IF EXISTS project_summary;",
+    "DROP TABLE IF EXISTS projects CASCADE;",
+    "CREATE TABLE projects (id SERIAL PRIMARY KEY, name VARCHAR(100), status VARCHAR(20), budget INTEGER);",
+    "INSERT INTO projects (id, name, status, budget) VALUES (1, 'Metro Upgrade', 'Open', 120000), (2, 'River Cleanup', 'Closed', 80000), (3, 'Library Expansion', 'Open', 45000), (4, 'Park Renewal', 'Closed', 30000) ON CONFLICT (id) DO NOTHING;"
+  ],
+  "validationRules": {
+    "requiredKeywords": ["CREATE VIEW", "PROJECT_SUMMARY", "AS", "SELECT", "FROM", "PROJECTS"],
+    "allowEmptyResult": true
+  }
+}
