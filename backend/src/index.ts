@@ -26,6 +26,15 @@ app.use('/api/query', queryRouter);
 app.use('/api/progress', progressRouter);
 app.use('/api/help', helpRouter);
 
+app.get('/', (_req, res) => {
+  res.json({
+    name: 'QueryQuest Backend API',
+    status: 'ok',
+    health: '/health',
+    apiBase: '/api',
+  });
+});
+
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
