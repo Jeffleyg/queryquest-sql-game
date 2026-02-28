@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../utils/firebase';
 import api from '../utils/api';
+import { getFirebaseAuthErrorMessage } from '../utils/firebaseError';
 import '../styles/Auth.css';
 
 export default function LoginPage() {
@@ -34,7 +35,7 @@ export default function LoginPage() {
       // Redirect to dashboard
       navigate('/');
     } catch (err: any) {
-      const message = err.response?.data?.error || err.message || 'Login failed. Please try again.';
+      const message = err.response?.data?.error || getFirebaseAuthErrorMessage(err, 'Login failed. Please try again.');
       setError(message);
     } finally {
       setLoading(false);
@@ -60,7 +61,7 @@ export default function LoginPage() {
 
       navigate('/');
     } catch (err: any) {
-      const message = err.response?.data?.error || err.message || 'Google login failed. Please try again.';
+      const message = err.response?.data?.error || getFirebaseAuthErrorMessage(err, 'Google login failed. Please try again.');
       setError(message);
     } finally {
       setLoading(false);

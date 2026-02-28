@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../utils/firebase';
 import api from '../utils/api';
+import { getFirebaseAuthErrorMessage } from '../utils/firebaseError';
 import '../styles/Auth.css';
 
 export default function RegisterPage() {
@@ -65,7 +66,7 @@ export default function RegisterPage() {
 
       navigate('/pending-verification', { state: { email } });
     } catch (err: any) {
-      const message = err.response?.data?.error || err.message || 'Registration failed. Please try again.';
+      const message = err.response?.data?.error || getFirebaseAuthErrorMessage(err, 'Registration failed. Please try again.');
       setError(message);
     } finally {
       setLoading(false);
@@ -92,7 +93,7 @@ export default function RegisterPage() {
 
       navigate('/');
     } catch (err: any) {
-      const message = err.response?.data?.error || err.message || 'Google signup failed. Please try again.';
+      const message = err.response?.data?.error || getFirebaseAuthErrorMessage(err, 'Google signup failed. Please try again.');
       setError(message);
     } finally {
       setLoading(false);

@@ -202,6 +202,28 @@ firebase deploy --only hosting --project your-project-id
 - Reset password flow works end-to-end
 - Mission loading and SQL query execution work
 
+### Troubleshooting: `Firebase: Error (auth/invalid-credential)`
+
+If login/register shows `auth/invalid-credential`, check in this order:
+
+1. **Authentication providers enabled** (Firebase Console → Authentication → Sign-in method)
+   - Enable **Email/Password**
+   - Enable **Google** (if using Google login)
+2. **Frontend Firebase config is from the same project** (`querygame-b48a7`)
+   - `VITE_FIREBASE_PROJECT_ID=querygame-b48a7`
+   - `VITE_FIREBASE_AUTH_DOMAIN=querygame-b48a7.firebaseapp.com`
+3. **Authorized domains** (Authentication → Settings → Authorized domains)
+   - Ensure `querygame-b48a7.web.app` is present
+4. **Rebuild frontend after `.env` change**
+   ```bash
+   cd frontend
+   npm run build
+   cd ..
+   firebase deploy --only hosting
+   ```
+5. **Use correct account credentials**
+   - `auth/invalid-credential` can also mean wrong email/password
+
 ## 8) Recommended release tag
 
 After successful smoke tests:
