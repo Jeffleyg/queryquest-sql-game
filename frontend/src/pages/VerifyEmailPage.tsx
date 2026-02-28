@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import '../styles/Auth.css';
 
 export default function VerifyEmailPage() {
@@ -23,7 +23,7 @@ export default function VerifyEmailPage() {
 
   async function verifyEmail(token: string) {
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/verify-email', {
+      const response = await api.post('/auth/verify-email', {
         token,
       });
 

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import '../styles/Auth.css';
 
 function getPasswordError(password: string): string | null {
@@ -53,7 +53,7 @@ export default function ResetPasswordPage() {
     setStatus('loading');
 
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/reset-password', {
+      const response = await api.post('/auth/reset-password', {
         token,
         password,
       });

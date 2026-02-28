@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import type { QueryAnalysis } from '../types';
 
 interface PerformanceTabProps {
@@ -17,7 +17,7 @@ export default function PerformanceTab({ query, missionId }: PerformanceTabProps
     setError('');
     
     try {
-      const response = await axios.post('http://localhost:3001/api/query/analyze', {
+      const response = await api.post('/query/analyze', {
         sql: query,
         missionId,
       });

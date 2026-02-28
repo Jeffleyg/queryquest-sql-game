@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import '../styles/Auth.css';
 
 export default function PendingVerificationPage() {
@@ -13,7 +13,7 @@ export default function PendingVerificationPage() {
   async function resendVerificationEmail() {
     setLoading(true);
     try {
-      await axios.post('http://localhost:3001/api/auth/resend-verification', {
+      await api.post('/auth/resend-verification', {
         email,
       });
       setMessage('✅ Verification email resent! Check your inbox.');

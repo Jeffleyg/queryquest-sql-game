@@ -11,8 +11,13 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const corsOrigin = process.env.CORS_ORIGIN;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: corsOrigin ? corsOrigin.split(',').map((origin) => origin.trim()) : true,
+  })
+);
 app.use(express.json());
 
 app.use('/api/auth', authRouter);

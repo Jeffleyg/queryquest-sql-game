@@ -6,6 +6,8 @@ A gamified SQL learning platform for teenagers (12–16 years old), designed to 
 
 QueryQuest transforms SQL learning into an engaging adventure where students complete missions by writing and executing real SQL queries. The platform provides a safe, containerized PostgreSQL environment and tracks progress through an XP (experience points) system.
 
+For production release steps, see `PUBLISH_GUIDE.md`.
+
 ## ✨ Features
 
 - **20+ Interactive Missions**: Learn SQL through story-driven challenges across 2 levels

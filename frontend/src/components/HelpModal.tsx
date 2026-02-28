@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import api from '../utils/api';
 import '../styles/HelpModal.css';
 
 interface SQLExample {
@@ -43,9 +44,8 @@ export function HelpModal({ isOpen, onClose, currentMissionId, onUseTemplate }: 
 
   const fetchExamples = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/help/examples');
-      const data = await response.json();
-      setExamples(data.examples);
+      const response = await api.get('/help/examples');
+      setExamples(response.data.examples);
     } catch (error) {
       console.error('Failed to fetch examples:', error);
     }
@@ -53,9 +53,8 @@ export function HelpModal({ isOpen, onClose, currentMissionId, onUseTemplate }: 
 
   const fetchTemplate = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/help/template/${currentMissionId}`);
-      const data = await response.json();
-      setTemplate(data.template);
+      const response = await api.get(`/help/template/${currentMissionId}`);
+      setTemplate(response.data.template);
     } catch (error) {
       console.error('Failed to fetch template:', error);
     }
@@ -63,9 +62,8 @@ export function HelpModal({ isOpen, onClose, currentMissionId, onUseTemplate }: 
 
   const fetchManual = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/help/manual');
-      const data = await response.json();
-      setManualSections(data.sections);
+      const response = await api.get('/help/manual');
+      setManualSections(response.data.sections);
     } catch (error) {
       console.error('Failed to fetch manual:', error);
     }

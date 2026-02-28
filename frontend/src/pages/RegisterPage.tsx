@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../utils/firebase';
+import api from '../utils/api';
 import '../styles/Auth.css';
 
 export default function RegisterPage() {
@@ -58,7 +58,7 @@ export default function RegisterPage() {
       await sendEmailVerification(credentials.user);
 
       const idToken = await credentials.user.getIdToken();
-      await axios.post('http://localhost:3001/api/auth/firebase', {
+      await api.post('/auth/firebase', {
         idToken,
         username,
       });
@@ -79,7 +79,7 @@ export default function RegisterPage() {
     try {
       const credentials = await signInWithPopup(auth, googleProvider);
       const idToken = await credentials.user.getIdToken();
-      const response = await axios.post('http://localhost:3001/api/auth/firebase', {
+      const response = await api.post('/auth/firebase', {
         idToken,
         username,
       });
