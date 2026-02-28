@@ -95,6 +95,10 @@ firebase deploy --only hosting --project your-project-id
    - Copy all values from `backend/.env.example`
    - Set `FRONTEND_URL=https://querygame-b48a7.web.app`
    - Set `CORS_ORIGIN=https://querygame-b48a7.web.app`
+   - Firebase Admin (Render-friendly):
+     - Preferred: set `FIREBASE_SERVICE_ACCOUNT_JSON` with your full service account JSON
+     - Or set split fields: `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`
+     - For `FIREBASE_PRIVATE_KEY`, keep escaped new lines (`\\n`) in the value
    - Database details (PostgreSQL, Firebase service account, SMTP)
 6. Click **Create Web Service**
 7. Wait for deploy (2-5 minutes)
